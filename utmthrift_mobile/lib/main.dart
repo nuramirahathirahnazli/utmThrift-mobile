@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'views/home_screen.dart';
 import 'views/items/item_cart.dart';
@@ -12,7 +14,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: BottomNavBar(),
     );
@@ -20,6 +22,8 @@ class MyApp extends StatelessWidget {
 }
 
 class BottomNavBar extends StatefulWidget {
+  const BottomNavBar({super.key});
+
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
 }
@@ -29,8 +33,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   final List<Widget> _screens = [
     HomeScreen(),
-    CartScreen(),
-    ProfileScreen(),
+    const CartScreen(),
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {

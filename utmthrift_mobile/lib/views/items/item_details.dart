@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ProductDetailScreen extends StatelessWidget {
   final Map<String, dynamic> product;
 
-  ProductDetailScreen({required this.product});
+  const ProductDetailScreen({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -13,15 +13,15 @@ class ProductDetailScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Image.network(product["image"], width: 200, height: 200),
-          SizedBox(height: 20),
-          Text(product["name"], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          Text("\$${product["price"]}", style: TextStyle(fontSize: 20, color: Colors.green)),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
+          Text(product["name"], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text("\$${product["price"]}", style: const TextStyle(fontSize: 20, color: Colors.green)),
+          const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
               // Add to cart logic here
             },
-            child: Text("Add to Cart"),
+            child: const Text("Add to Cart"),
           ),
         ],
       ),

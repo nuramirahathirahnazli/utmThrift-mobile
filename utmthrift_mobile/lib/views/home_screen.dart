@@ -8,10 +8,12 @@ class HomeScreen extends StatelessWidget {
     {"name": "Headphones", "price": 100, "image": "https://via.placeholder.com/150"},
   ];
 
+   HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("UTMThrift Marketplace")),
+      appBar: AppBar(title: const Text("UTMThrift Marketplace")),
       body: ListView.builder(
         itemCount: products.length,
         itemBuilder: (context, index) {

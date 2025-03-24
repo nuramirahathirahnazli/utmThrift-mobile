@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/product_viewmodel.dart';
@@ -19,11 +21,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Products")),
+      appBar: AppBar(title: const Text("Products")),
       body: Consumer<ProductViewModel>(
         builder: (context, productViewModel, child) {
           if (productViewModel.products.isEmpty) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           return ListView.builder(

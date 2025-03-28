@@ -1,22 +1,44 @@
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors
 
 import 'package:flutter/material.dart';
-import 'views/home_screen.dart';
-import 'views/items/item_cart.dart';
+import 'package:provider/provider.dart';
+
+import 'package:utmthrift_mobile/viewmodels/signup_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/signin_viewmodel.dart';
+
+import 'views/pages/welcome_page.dart';
+import 'views/pages/home_screen.dart';
+
 import 'views/profile/profile_screen.dart';
+import 'package:utmthrift_mobile/views/auth/sign_up.dart';
+import 'package:utmthrift_mobile/views/auth/sign_in.dart';
+
+import 'views/items/item_cart.dart';
+
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SigninViewModel()),
+        ChangeNotifierProvider(create: (_) => SignupViewModel()),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: BottomNavBar(),
+      home: WelcomePage(),
+      routes: {
+        '/home': (context) => HomeScreen(),
+        '/sign_up': (context) => SignUpScreen(),
+        '/sign_in': (context) => SignInScreen(), 
+      },
     );
   }
 }

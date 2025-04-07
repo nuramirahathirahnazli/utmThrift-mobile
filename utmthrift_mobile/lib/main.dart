@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'package:utmthrift_mobile/viewmodels/signup_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/signin_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
 
 import 'views/pages/welcome_page.dart';
 import 'views/pages/home_screen.dart';
@@ -22,6 +23,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => SigninViewModel()),
         ChangeNotifierProvider(create: (_) => SignupViewModel()),
+        ChangeNotifierProvider(create: (_) => ProfileViewModel()),
       ],
       child: MyApp(),
     ),
@@ -35,7 +37,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: WelcomePage(),
       routes: {
-        '/home': (context) => HomeScreen(),
+        '/home': (context) => const HomeScreen(),
         '/sign_up': (context) => SignUpScreen(),
         '/sign_in': (context) => SignInScreen(), 
       },
@@ -54,7 +56,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    HomeScreen(),
+    const HomeScreen(),
     const CartScreen(),
     const ProfileScreen(),
   ];

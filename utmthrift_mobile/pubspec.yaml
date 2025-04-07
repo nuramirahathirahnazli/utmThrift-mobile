@@ -31,6 +31,11 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.2
+  path_provider: 2.1.4
+  mime: ^2.0.0
+  image_picker: ^0.8.5+3
+  http_parser: ^4.0.0
+  html: ^0.15.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -38,6 +43,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   provider: ^6.0.5
   shared_preferences: ^2.2.3
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +64,8 @@ flutter:
   uses-material-design: true
   assets:
   - assets/images/welcome_page.jpg
+  - assets/images/profile_pic.png
+
   fonts:
     - family: AndadaPro
       fonts:

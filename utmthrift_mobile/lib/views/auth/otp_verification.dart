@@ -20,7 +20,8 @@ Future<void> verifyOTP() async {
   setState(() => isLoading = true);
 
   final response = await http.post(
-    Uri.parse("http://127.0.0.1:8000/api/verify-otp"),
+    Uri.parse("http://127.0.0.1:8000/api/verify-otp"), //localhost 
+   //  Uri.parse("http://10.211.98.11:8000/api/verify-otp"), //real device
     body: {
       'email': widget.email,
       'otp': otpController.text.trim(),
@@ -77,15 +78,14 @@ Future<void> verifyOTP() async {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-  onPressed: isLoading ? null : verifyOTP,
-  style: ElevatedButton.styleFrom(
-    backgroundColor: isLoading ? Colors.grey : Colors.orange, // Disable color change
-  ),
-  child: isLoading
-      ? const CircularProgressIndicator(color: Colors.white)
-      : const Text('Verify OTP'),
-),
-
+              onPressed: isLoading ? null : verifyOTP,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isLoading ? Colors.grey : Colors.orange, // Disable color change
+              ),
+              child: isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Verify OTP'),
+            ),
           ],
         ),
       ),

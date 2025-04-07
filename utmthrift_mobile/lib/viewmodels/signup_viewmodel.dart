@@ -7,7 +7,8 @@ import 'package:utmthrift_mobile/views/auth/otp_verification.dart';
 
 class SignupViewModel extends ChangeNotifier {
   bool isLoading = false;
-  static const String baseUrl = "http://127.0.0.1:8000/api"; 
+   static const String baseUrl = 'http://127.0.0.1:8000/api'; //localhost
+  // static const String baseUrl = 'http://10.211.98.11:8000/api'; //real device
 
   Future<bool> registerUser({
     required String name,

@@ -27,7 +27,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _locationController;
 
   String? _selectedGender;
-  String? _selectedStatus;
+  String? _selectedUserRole;
   File? _image;
   String? cloudinaryUrl; // Holds Cloudinary image URL
 
@@ -49,7 +49,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           _phoneController.text = profileVM.user?.contact ?? "";
           _locationController.text = profileVM.user?.location ?? "";
           _selectedGender = profileVM.user?.gender ?? "Male";
-          _selectedStatus = profileVM.user?.status ?? "Student";
+          _selectedUserRole = profileVM.user?.userRole ?? "Student";
           cloudinaryUrl = profileVM.user?.profilePicture;
         });
       }
@@ -190,8 +190,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 setState(() => _selectedGender = value);
               }),
               _buildTextField("Location (only shortform of college)", _locationController),
-              _buildDropdownField("Status", ["Student", "Lecturer"], _selectedStatus, (value) {
-                setState(() => _selectedStatus = value);
+              _buildDropdownField("User Role", ["Student", "Lecturer"], _selectedUserRole, (value) {
+                setState(() => _selectedUserRole = value);
               }),
               _buildReadOnlyField("User Type", user?.userType ?? "N/A"),
               const SizedBox(height: 20),
@@ -302,7 +302,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       email: profileVM.user?.email ?? "",
       gender: _selectedGender ?? "Male",
       location: _locationController.text.trim(),
-      status: _selectedStatus ?? "Student",
+      userRole: _selectedUserRole ?? "Student",
       userType: profileVM.user?.userType ?? "Buyer",
       profilePicture: cloudinaryUrl ?? "",
     );

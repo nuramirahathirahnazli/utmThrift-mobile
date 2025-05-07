@@ -1,4 +1,5 @@
-// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api
+
+// ignore_for_file: library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,16 +9,23 @@ import 'package:utmthrift_mobile/services/auth_service.dart';
 import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
 
 class ProfilePage extends StatefulWidget {
+  final String userType;
+  final VoidCallback? onTap;
+
+  const ProfilePage({super.key, required this.userType, this.onTap});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  
   @override
   void initState() {
     super.initState();
     Provider.of<ProfileViewModel>(context, listen: false).fetchUserProfile();
   }
+
 
   @override
   Widget build(BuildContext context) {

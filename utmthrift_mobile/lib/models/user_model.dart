@@ -7,7 +7,7 @@ class UserModel {
   final String userType; 
   final String gender; 
   final String location; 
-  final String status; 
+  final String userRole; 
   final DateTime createdAt;
   final String createdAtFormatted;
 
@@ -20,7 +20,7 @@ class UserModel {
     required this.userType,
     required this.gender,
     required this.location,
-    required this.status,
+    required this.userRole,
     required this.createdAt,
     this.createdAtFormatted = "",
   });
@@ -38,7 +38,7 @@ class UserModel {
       userType: json['user_type'] ?? '',
       gender: json['gender'] ?? '',
       location: json['location'] ?? '',
-      status: json['status'] ?? '',
+      userRole: json['user_role'] ?? '',
       createdAt: DateTime.parse(json['created_at']),
     );
   }
@@ -53,7 +53,7 @@ class UserModel {
     String? userType,
     String? gender,
     String? location,
-    String? status,
+    String? userRole,
     DateTime? createdAt,
     String? createdAtFormatted,
   }) {
@@ -66,7 +66,7 @@ class UserModel {
       userType: userType ?? this.userType,
       gender: gender ?? this.gender,
       location: location ?? this.location,
-      status: status ?? this.status,
+      userRole: userRole ?? this.userRole,
       createdAt: createdAt ?? this.createdAt,
       createdAtFormatted: createdAtFormatted ?? this.createdAtFormatted,
     );

@@ -11,9 +11,8 @@ class UserService {
   /// **Fetch User Profile**
   static Future<UserModel?> getUserProfile(String token) async {
     final response = await http.get(
-      Uri.parse('http://127.0.0.1:8000/api/profile'), //localhost
-     // Uri.parse('http://10.211.98.11:8000/api/profile'), //real device
-
+      Uri.parse('$baseUrl/profile'),
+      
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer $token",
@@ -52,7 +51,7 @@ class UserService {
           "Authorization": "Bearer $token",
         },
         body: jsonEncode(updatedData),
-      ).timeout(const Duration(seconds: 10)); // ⏳ Timeout
+      ).timeout(const Duration(seconds: 10)); // 
 
       print("[UserService] Update response status: ${response.statusCode}");
 

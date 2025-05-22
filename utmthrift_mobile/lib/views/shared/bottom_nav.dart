@@ -31,8 +31,8 @@ class BottomNavBar extends StatelessWidget {
           label: userType == 'Seller' ? 'Upload' : 'Notifications',
         ),
         BottomNavigationBarItem(
-          icon: Icon(userType == 'Seller' ? Icons.notifications : Icons.favorite),
-          label: userType == 'Seller' ? 'Notifications' : 'My Likes',
+          icon: Icon(userType == 'Seller' ? Icons.list_alt : Icons.favorite),
+          label: userType == 'Seller' ? 'My Items' : 'My Likes',
         ),
         const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Me'),
       ],

@@ -3,7 +3,13 @@
 import 'package:flutter/material.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 import 'package:utmthrift_mobile/views/items/item_category.dart';
+
+//Page based on bottom menu navigation
 import 'package:utmthrift_mobile/views/pages/profile_page.dart';
+import 'package:utmthrift_mobile/views/seller/seller_add_item_page.dart';
+import 'package:utmthrift_mobile/views/seller/seller_my_items_page.dart';
+
+//shared folder
 import 'package:utmthrift_mobile/views/shared/bottom_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 import 'package:utmthrift_mobile/views/shared/hamburger_menu.dart';
@@ -44,6 +50,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     );
   }
 
+// Function to return the appropriate page based on the selected index
   Widget _getPage(int index) {
     switch (index) {
       case 0:
@@ -51,9 +58,9 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
       case 1:
         return const Center(child: Text("Explore Page - Coming Soon"));
       case 2:
-        return const Center(child: Text("Add Item Page - Coming Soon"));
+        return const AddItemScreen(); 
       case 3:
-        return const Center(child: Text("Notifications Page - Coming Soon"));
+        return const MyItemsPage();
       case 4:
         return ProfilePage(userType: userType,);
       default:

@@ -62,6 +62,8 @@ class AuthService {
       if (response.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', data['token']);
+        await prefs.setInt('user_id', data['user']['id']); 
+        await prefs.setString('user_type', data['user']['user_type']);
         return data;
       } else {
         return {"error": data["message"] ?? "Login failed!"};
@@ -118,6 +120,7 @@ class AuthService {
     print("Logout Response Body: ${response.body}");
 
     await prefs.remove('token');
+    await prefs.remove('user_id');
     await prefs.remove('user_type'); 
 
     Navigator.pushAndRemoveUntil(

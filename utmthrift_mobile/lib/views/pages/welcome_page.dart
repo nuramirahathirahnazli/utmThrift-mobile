@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:utmthrift_mobile/views/auth/sign_up.dart';
 import 'package:utmthrift_mobile/views/auth/sign_in.dart';
 
+//test
+//import 'package:utmthrift_mobile/views/test-cors.dart'; 
+
 class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -106,6 +109,29 @@ class WelcomePage extends StatelessWidget {
                       ),
                     ),
                   ),
+                   const SizedBox(height: 10),
+
+                  // CORS Test Button
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   child: ElevatedButton(
+                  //     onPressed: () {
+                  //       // Navigate to CORS Test screen
+                  //       Navigator.pushNamed(context, '/test_cors');
+                  //     },
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: const Color(0xFFBB0000), // Button color for CORS Test
+                  //       padding: const EdgeInsets.symmetric(vertical: 15),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(30),
+                  //       ),
+                  //     ),
+                  //     child: const Text(
+                  //       "Test CORS",
+                  //       style: TextStyle(fontSize: 18, color: Colors.white),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

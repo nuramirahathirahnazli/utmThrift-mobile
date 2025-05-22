@@ -39,7 +39,7 @@ class ProfileViewModel extends ChangeNotifier {
           userType: user!.userType, 
           gender: user!.gender,
           location: user!.location,
-          status: user!.status,
+          userRole: user!.userRole,
           createdAt: user!.createdAt,
           createdAtFormatted: formatDate(user!.createdAt),
         );
@@ -68,7 +68,7 @@ class ProfileViewModel extends ChangeNotifier {
     required String email,
     required String gender,
     required String location,
-    required String status,
+    required String userRole,
     required String userType,
   }) async {
      final url = Uri.parse("http://127.0.0.1:8000/api/profile/update"); //localhost
@@ -86,7 +86,7 @@ class ProfileViewModel extends ChangeNotifier {
     print("Phone: $contact");
     print("Gender: $gender");
     print("Location: $location");
-    print("Status: $status");
+    print("User Role: $userRole");
 
     try {
       final response = await http.put(
@@ -101,7 +101,7 @@ class ProfileViewModel extends ChangeNotifier {
           "email": email,
           "gender": gender,
           "location": location,
-          "status": status,
+          "user_role": userRole,
           "user_type": userType,
           if (profilePicture != null && profilePicture.isNotEmpty)
           "profile_picture": profilePicture, 

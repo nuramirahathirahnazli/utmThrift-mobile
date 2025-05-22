@@ -67,11 +67,10 @@ class _SignInScreenState extends State<SignInScreen> {
                               String? message = await signinViewModel.loginUser(
                                 _emailController.text.trim(),
                                 _passwordController.text.trim(),
+                                context,
                               );
 
                               if (message == "Login successful!") {
-                                Navigator.pushReplacementNamed(context, '/home');
-                              } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(message ?? "An error occurred")),
                                 );

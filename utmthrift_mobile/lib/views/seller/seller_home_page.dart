@@ -1,31 +1,36 @@
-//home screen untuk buyer
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, prefer_final_fields, unused_import
 
 import 'package:flutter/material.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 import 'package:utmthrift_mobile/views/items/item_category.dart';
+
+//Page based on bottom menu navigation
 import 'package:utmthrift_mobile/views/pages/profile_page.dart';
+import 'package:utmthrift_mobile/views/seller/seller_add_item_page.dart';
+import 'package:utmthrift_mobile/views/seller/seller_my_items_page.dart';
+
+//shared folder
 import 'package:utmthrift_mobile/views/shared/bottom_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 import 'package:utmthrift_mobile/views/shared/hamburger_menu.dart';
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class SellerHomeScreen extends StatefulWidget {
+  const SellerHomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _SellerHomeScreenState createState() => _SellerHomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _SellerHomeScreenState extends State<SellerHomeScreen> {
   int _selectedIndex = 0;
-  final String userType = 'Buyer'; // Update dynamically as required
+  final String userType = 'Seller';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: HamburgerMenu(
-        userType: userType, // pass dynamically if required
+        userType: 'Seller', // or pass dynamically
         onLogout: () {
           Navigator.pushReplacementNamed(context, '/login');
         },
@@ -34,29 +39,30 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: _selectedIndex == 0 ? const TopNavBar() : null,
       body: _getPage(_selectedIndex),
       bottomNavigationBar: BottomNavBar(
-        currentIndex: _selectedIndex,
-        userType: userType,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-      ),
+      currentIndex: _selectedIndex,
+      userType: userType,
+      onTap: (index) {
+        setState(() {
+          _selectedIndex = index;
+        });
+      },
+    ),
     );
   }
 
+// Function to return the appropriate page based on the selected index
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return const HomeScreenContent();
+        return const HomeScreenContent(); 
       case 1:
         return const Center(child: Text("Explore Page - Coming Soon"));
       case 2:
-        return const Center(child: Text("Notifications Page - Coming Soon"));
+        return const AddItemScreen(); 
       case 3:
-        return const Center(child: Text("My Likes Page - Coming Soon"));
+        return const MyItemsPage();
       case 4:
-        return ProfilePage(userType: userType);
+        return ProfilePage(userType: userType,);
       default:
         return const HomeScreenContent();
     }

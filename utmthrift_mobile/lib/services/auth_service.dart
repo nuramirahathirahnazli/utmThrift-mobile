@@ -10,6 +10,7 @@ class AuthService {
   static const String baseUrl = 'http://127.0.0.1:8000/api'; //localhost
  // static const String baseUrl = 'http://10.211.98.11:8000/api'; //real device
 
+  // Register User
   Future<String?> registerUser({
     required String name,
     required String email,
@@ -61,6 +62,8 @@ class AuthService {
       if (response.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', data['token']);
+        await prefs.setInt('user_id', data['user']['id']); 
+        await prefs.setString('user_type', data['user']['user_type']);
         return data;
       } else {
         return {"error": data["message"] ?? "Login failed!"};
@@ -82,11 +85,11 @@ class AuthService {
         content: const Text("Are you sure you want to log out?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false), // Cancel
+            onPressed: () => Navigator.pop(context, false), 
             child: const Text("Cancel"),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true), // Confirm Logout
+            onPressed: () => Navigator.pop(context, true),
             child: const Text("Logout", style: TextStyle(color: Colors.red)),
           ),
         ],
@@ -116,13 +119,10 @@ class AuthService {
     print("Logout Response: ${response.statusCode}");
     print("Logout Response Body: ${response.body}");
 
-    if (response.statusCode == 200 || response.statusCode == 204) {
-      print("Logout successful from backend");
-    } else {
-      print("Logout failed from backend");
-    }
+    await prefs.remove('token');
+    await prefs.remove('user_id');
+    await prefs.remove('user_type'); 
 
-    // Redirect to Login Page & Clear Navigation Stack
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => SignInScreen()),

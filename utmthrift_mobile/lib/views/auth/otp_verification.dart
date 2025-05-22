@@ -21,7 +21,8 @@ Future<void> verifyOTP() async {
 
   final response = await http.post(
     Uri.parse("http://127.0.0.1:8000/api/verify-otp"), //localhost 
-   //  Uri.parse("http://10.211.98.11:8000/api/verify-otp"), //real device
+   //Uri.parse("http://10.211.98.11:8000/api/verify-otp"), //real device
+ 
     body: {
       'email': widget.email,
       'otp': otpController.text.trim(),

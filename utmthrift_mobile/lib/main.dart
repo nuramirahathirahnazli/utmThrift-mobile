@@ -1,21 +1,23 @@
-// ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:utmthrift_mobile/viewmodels/signup_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/signin_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 
 import 'views/pages/welcome_page.dart';
 import 'views/pages/home_screen.dart';
+import 'views/seller/seller_home_page.dart';
+import 'views/seller/seller_add_item_page.dart';
+import 'views/seller/seller_my_items_page.dart';
 
 import 'views/profile/profile_screen.dart';
-import 'package:utmthrift_mobile/views/auth/sign_up.dart';
-import 'package:utmthrift_mobile/views/auth/sign_in.dart';
+import 'views/auth/sign_up.dart';
+import 'views/auth/sign_in.dart';
 
-import 'views/items/item_cart.dart';
-
+//test cors
+import 'views/test-cors.dart';
 
 void main() {
   runApp(
@@ -24,13 +26,16 @@ void main() {
         ChangeNotifierProvider(create: (_) => SigninViewModel()),
         ChangeNotifierProvider(create: (_) => SignupViewModel()),
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
+        ChangeNotifierProvider(create: (_) => ItemViewModel()),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -39,47 +44,14 @@ class MyApp extends StatelessWidget {
       routes: {
         '/home': (context) => const HomeScreen(),
         '/sign_up': (context) => SignUpScreen(),
-        '/sign_in': (context) => SignInScreen(), 
+        '/sign_in': (context) => SignInScreen(),
+        '/seller_home': (context) => const SellerHomeScreen(),
+        '/profile': (context) => const ProfileScreen(), 
+        '/add_item': (context) => const AddItemScreen(),
+        '/my_items': (context) => const MyItemsPage(),
+        //nak test cors in flutter
+        '/test_cors': (context) => CORSCheckScreen(),
       },
-    );
-  }
-}
-
-class BottomNavBar extends StatefulWidget {
-  const BottomNavBar({super.key});
-
-  @override
-  _BottomNavBarState createState() => _BottomNavBarState();
-}
-
-class _BottomNavBarState extends State<BottomNavBar> {
-  int _selectedIndex = 0;
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const CartScreen(),
-    const ProfileScreen(),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
     );
   }
 }

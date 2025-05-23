@@ -13,6 +13,8 @@ class ItemViewModel extends ChangeNotifier {
 
   List<dynamic> categories = [];
   List<Item> sellerItems = [];
+  List<Item> latestItems = [];
+
   bool isLoading = false;
   String errorMessage = '';
 
@@ -49,6 +51,22 @@ class ItemViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Fetch latest items from API
+  Future<void> getLatestItems({int limit = 20}) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      latestItems = await ItemService.fetchLatestItems(limit: limit);
+    } catch (e) {
+      print('Error loading items: $e');
+      latestItems = [];
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+  
   /// Fetch single item details using item ID
   Future<Map<String, dynamic>?> fetchItemDetails(int id) async {
     isLoading = true;

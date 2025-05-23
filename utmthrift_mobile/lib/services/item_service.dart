@@ -40,6 +40,38 @@ class ItemService {
     }
   }
 
+  //Fetch latest 20 items for user homescreen purpose
+  static Future<List<Item>> fetchLatestItems({int limit = 20}) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/items?limit=$limit'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> body = json.decode(response.body);
+
+      if (body.containsKey('data')) {
+        List<dynamic> itemsList = body['data'];
+        return itemsList.map((e) => Item.fromJson(e)).toList();
+      } else {
+        throw Exception("Invalid response format: Missing 'items' key.");
+      }
+    } else {
+      throw Exception('Failed to load latest items');
+    }
+  }
+
+
   // Fetch item details by item ID
   Future<Map<String, dynamic>> fetchItemDetails(int id) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

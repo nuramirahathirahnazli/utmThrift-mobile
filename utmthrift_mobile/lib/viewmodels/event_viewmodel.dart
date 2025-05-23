@@ -6,9 +6,8 @@ import '../services/event_service.dart';
 
 class EventViewModel extends ChangeNotifier {
   List<Event> latestEvents = [];
+  List<Event> allEvents = [];
   bool isLoading = false;
-
-  get allEvents => null;
 
   Future<void> getLatestEvents({int limit = 4}) async {
     isLoading = true;
@@ -25,5 +24,19 @@ class EventViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void fetchAllEvents() {}
+  Future<void> fetchAllEvents() async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      // Fetch all events by calling fetchEvents without limit or with a large limit
+      allEvents = await EventService.fetchEvents(limit: 1000);  // or remove limit param and adjust service accordingly
+    } catch (e) {
+      print('Error loading all events: $e');
+      allEvents = [];
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
 }

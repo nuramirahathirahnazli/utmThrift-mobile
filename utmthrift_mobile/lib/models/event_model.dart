@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 class Event {
   final int id;
   final String title;
@@ -23,14 +25,15 @@ class Event {
 
   factory Event.fromJson(Map<String, dynamic> json) {
   print('Poster raw value: ${json['poster']}');
+  
   return Event(
     id: json['id'],
-    title: json['title'],
+    title: json['title'] ?? '',
     description: json['description'] ?? '',
-    eventDate: json['event_date'],
-    startTime: json['start_time'],
-    endTime: json['end_time'],
-    location: json['location'],
+    eventDate: json['event_date'] ?? '',
+    startTime: json['start_time'] ?? '',
+    endTime: json['end_time'] ?? '',
+    location: json['location'] ?? '',
     poster: json['poster'] ?? '',
 
   );

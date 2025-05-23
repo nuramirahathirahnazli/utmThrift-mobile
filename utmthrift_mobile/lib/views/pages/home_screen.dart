@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:utmthrift_mobile/views/events/all_events_page.dart';
 import 'package:utmthrift_mobile/views/events/event_details_page.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
@@ -81,9 +82,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   void initState() {
     super.initState();
 
-    // Trigger fetching latest events after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EventViewModel>().getLatestEvents();
+      context.read<ItemViewModel>().getLatestItems();
     });
   }
 
@@ -100,7 +101,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             _buildSectionHeader("Popular Categories"),
             _buildCategoryList(context),
             const SizedBox(height: 20),
-            _buildSectionHeader("Daily Explore"),
+            _buildSectionHeader("Daily Explore"), //daily explore hanya akan keluar kan yang latest item dari database (up to 20)
             _buildProductGrid(),
           ],
         ),
@@ -146,7 +147,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => EventDetailsPage(event: event, imagePath: fullImageUrl)),
+                        MaterialPageRoute(
+                          builder: (_) => EventDetailsPage(event: event, imagePath: ''),
+                        ),
                       );
                     },
                     child: Container(
@@ -247,27 +250,37 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   }
 
   Widget _buildProductGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 0.75,
-      ),
-      itemCount: 6,
-      itemBuilder: (context, index) {
-        return ItemCardExplore(
-          imageUrl: "https://via.placeholder.com/150",
-          name: "Product $index",
-          price: (index + 1) * 10.0,
-          seller: "Seller $index",
-          condition: "New",
+    return Consumer<ItemViewModel>(
+      builder: (context, vm, _) {
+        if (vm.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (vm.latestItems.isEmpty) {
+          return const Center(child: Text("No items available"));
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 0.75,
+          ),
+          itemCount: vm.latestItems.length,
+          itemBuilder: (context, index) {
+            final item = vm.latestItems[index];
+            return ItemCardExplore(
+              imageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
+              name: item.name,
+              price: item.price,
+              condition: item.condition, 
+              seller: '',
+            );
+          },
         );
       },
     );
   }
 }
-
-//buat untuk event details pulak 

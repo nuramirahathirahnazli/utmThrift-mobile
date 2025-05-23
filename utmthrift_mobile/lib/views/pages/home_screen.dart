@@ -1,7 +1,10 @@
-//home screen untuk buyer
 // ignore_for_file: library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
+import 'package:utmthrift_mobile/views/events/all_events_page.dart';
+import 'package:utmthrift_mobile/views/events/event_details_page.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 import 'package:utmthrift_mobile/views/items/item_category.dart';
 import 'package:utmthrift_mobile/views/pages/profile_page.dart';
@@ -19,13 +22,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  final String userType = 'Buyer'; // Update dynamically as required
+  final String userType = 'Buyer';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: HamburgerMenu(
-        userType: userType, // pass dynamically if required
+        userType: userType,
         onLogout: () {
           Navigator.pushReplacementNamed(context, '/login');
         },
@@ -63,8 +66,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class HomeScreenContent extends StatelessWidget {
+class HomeScreenContent extends StatefulWidget {
   const HomeScreenContent({super.key});
+
+  @override
+  _HomeScreenContentState createState() => _HomeScreenContentState();
+}
+
+class _HomeScreenContentState extends State<HomeScreenContent> {
+  final String baseUrl = 'http://127.0.0.1:8000';
+  final String imageFolder = '/storage/events/';
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Trigger fetching latest events after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<EventViewModel>().getLatestEvents();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,11 +95,10 @@ class HomeScreenContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader("Don't Miss This", onSeeMore: () {}),
-            _buildHorizontalList(),
+            _buildEventSection(context),
             const SizedBox(height: 20),
             _buildSectionHeader("Popular Categories"),
-            _buildCategoryList(),
+            _buildCategoryList(context),
             const SizedBox(height: 20),
             _buildSectionHeader("Daily Explore"),
             _buildProductGrid(),
@@ -88,49 +108,84 @@ class HomeScreenContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, {VoidCallback? onSeeMore}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildEventSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        if (onSeeMore != null)
-          TextButton(onPressed: onSeeMore, child: const Text("See More"))
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text("Don't Miss This", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            TextButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AllEventsPage()));
+              },
+              child: const Text('See More'),
+            ),
+          ],
+        ),
+        Consumer<EventViewModel>(
+          builder: (context, vm, _) {
+            if (vm.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (vm.latestEvents.isEmpty) {
+              return const Center(child: Text("No events available"));
+            }
+
+            return SizedBox(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: vm.latestEvents.length,
+                itemBuilder: (context, index) {
+                  final event = vm.latestEvents[index];
+                  final fullImageUrl = event.fullPosterUrl;
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => EventDetailsPage(event: event, imagePath: fullImageUrl)),
+                      );
+                    },
+                    child: Container(
+                      width: 150,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(
+                          image: NetworkImage(fullImageUrl),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildHorizontalList() {
-    return SizedBox(
-      height: 150,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          _buildPromoCard('assets/event1.png'),
-          _buildPromoCard('assets/event2.png'),
-          _buildPromoCard('assets/event3.png'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPromoCard(String imagePath) {
+  Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Image.asset(imagePath, width: 120, height: 150, fit: BoxFit.cover),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildCategoryList() {
-    List<Map<String, String>> categories = [
-      {"imageUrl": "https://via.placeholder.com/150", "name": "Shoes"},
-      {"imageUrl": "https://via.placeholder.com/150", "name": "Men's Clothes"},
-      {"imageUrl": "https://via.placeholder.com/150", "name": "Women's Clothes"},
-      {"imageUrl": "https://via.placeholder.com/150", "name": "Accessories"},
-      {"imageUrl": "https://via.placeholder.com/150", "name": "Bags"},
-      {"imageUrl": "https://via.placeholder.com/150", "name": "Electronics"},
+  Widget _buildCategoryList(BuildContext context) {
+    List<Map<String, dynamic>> categories = [
+      { "icon": Icons.woman, "name": "Women Clothes" },
+      { "icon": Icons.man, "name": "Men Clothes" },
+      { "icon": Icons.favorite, "name": "Beauty & Health" },
+      { "icon": Icons.pets, "name": "Pet Supplies" },
+      { "icon": Icons.sports_soccer, "name": "Sports & Outdoors" },
+      { "icon": Icons.electrical_services, "name": "Electronics" },
+      { "icon": Icons.chair, "name": "Furniture" },
     ];
 
     return SizedBox(
@@ -144,13 +199,15 @@ class HomeScreenContent extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CategoryItemsScreen(categoryName: categories[index]["name"]!),
+                  builder: (context) => CategoryItemsScreen(
+                    categoryName: categories[index]["name"],
+                  ),
                 ),
               );
             },
-            child: _buildCategoryCard(
-              categories[index]["imageUrl"]!,
-              categories[index]["name"]!,
+            child: _buildCategoryIconCard(
+              categories[index]["icon"],
+              categories[index]["name"],
             ),
           );
         },
@@ -158,7 +215,7 @@ class HomeScreenContent extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(String imageUrl, String name) {
+  Widget _buildCategoryIconCard(IconData icon, String name) {
     return Container(
       width: 100,
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -177,7 +234,7 @@ class HomeScreenContent extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.network(imageUrl, height: 60, width: 60, fit: BoxFit.contain),
+          Icon(icon, size: 40, color: AppColors.color2),
           const SizedBox(height: 8),
           Text(
             name,
@@ -199,7 +256,7 @@ class HomeScreenContent extends StatelessWidget {
         mainAxisSpacing: 10,
         childAspectRatio: 0.75,
       ),
-      itemCount: 6, // Placeholder count
+      itemCount: 6,
       itemBuilder: (context, index) {
         return ItemCardExplore(
           imageUrl: "https://via.placeholder.com/150",
@@ -212,3 +269,5 @@ class HomeScreenContent extends StatelessWidget {
     );
   }
 }
+
+//buat untuk event details pulak 

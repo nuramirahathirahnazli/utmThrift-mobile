@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 
 class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
-  const TopNavBar({super.key});
+  final TextEditingController searchController;
+  final Function(String) onSearchSubmitted;
+
+  const TopNavBar({
+    super.key,
+    required this.searchController,
+    required this.onSearchSubmitted,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -25,8 +32,11 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const TextField(
-            decoration: InputDecoration(
+          child: TextField(
+            controller: searchController,
+            onSubmitted: onSearchSubmitted,
+            textInputAction: TextInputAction.search,
+            decoration: const InputDecoration(
               hintText: "Search anything in UTM Thrift",
               prefixIcon: Icon(Icons.search),
               border: InputBorder.none,
@@ -40,5 +50,4 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
       ),
     );
   }
-
 }

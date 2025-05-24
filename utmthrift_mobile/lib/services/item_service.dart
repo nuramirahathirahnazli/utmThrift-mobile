@@ -40,6 +40,30 @@ class ItemService {
     }
   }
 
+  // Fetch all items without any filters
+  Future<List<Item>> fetchAllItems() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/items'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> body = json.decode(response.body);
+      List<dynamic> itemsList = body.containsKey('data') ? body['data'] : body['items'];
+      return itemsList.map((e) => Item.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load all items');
+    }
+  }
+
+
   //Fetch latest 20 items for user homescreen purpose
   static Future<List<Item>> fetchLatestItems({int limit = 20}) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -71,6 +95,47 @@ class ItemService {
     }
   }
 
+  //For explore page
+  Future<List<Item>> fetchFilteredItems({
+    String? search,
+    int? categoryId,
+    double? minPrice,
+    double? maxPrice,
+    String? condition,
+  }) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final Map<String, String> queryParams = {};
+    if (search != null) queryParams['search'] = search;
+    if (categoryId != null) queryParams['category_id'] = categoryId.toString();
+    if (minPrice != null) queryParams['min_price'] = minPrice.toString();
+    if (maxPrice != null) queryParams['max_price'] = maxPrice.toString();
+    if (condition != null) queryParams['condition'] = condition;
+
+    final uri = Uri.parse('$baseUrl/items').replace(queryParameters: queryParams);
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> body = json.decode(response.body);
+      if (body.containsKey('data')) {
+        List<dynamic> itemsList = body['data'];
+        return itemsList.map((e) => Item.fromJson(e)).toList();
+      } else {
+        throw Exception("Missing 'data' in response.");
+      }
+    } else {
+      throw Exception('Failed to load items');
+    }
+  }
 
   // Fetch item details by item ID
   Future<Map<String, dynamic>> fetchItemDetails(int id) async {

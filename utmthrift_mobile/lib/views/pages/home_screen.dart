@@ -1,4 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +8,7 @@ import 'package:utmthrift_mobile/views/events/all_events_page.dart';
 import 'package:utmthrift_mobile/views/events/event_details_page.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 import 'package:utmthrift_mobile/views/items/item_category.dart';
+import 'package:utmthrift_mobile/views/pages/explore_page.dart';
 import 'package:utmthrift_mobile/views/pages/profile_page.dart';
 import 'package:utmthrift_mobile/views/shared/bottom_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
@@ -25,6 +26,21 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final String userType = 'Buyer';
 
+  // Add this controller
+  final TextEditingController _searchController = TextEditingController();
+
+  // Handle search submitted action
+  void _onSearchSubmitted(String value) {
+    // You can handle search here, e.g. navigate or filter items
+    print('Search submitted: $value');
+  }
+
+   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       backgroundColor: AppColors.base,
-      appBar: _selectedIndex == 0 ? const TopNavBar() : null,
+      appBar: _selectedIndex == 0 ? TopNavBar(
+        searchController: _searchController,
+        onSearchSubmitted: _onSearchSubmitted,
+      ) : null,
       body: _getPage(_selectedIndex),
       bottomNavigationBar: BottomNavBar(
         currentIndex: _selectedIndex,
@@ -54,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return const HomeScreenContent();
       case 1:
-        return const Center(child: Text("Explore Page - Coming Soon"));
+        return const ExplorePage();
       case 2:
         return const Center(child: Text("Notifications Page - Coming Soon"));
       case 3:

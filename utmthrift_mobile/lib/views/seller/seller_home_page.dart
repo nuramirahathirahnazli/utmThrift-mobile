@@ -301,7 +301,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               name: item.name,
               price: item.price,
               condition: item.condition, 
-              seller: '',
+              seller: '', itemId: item.id,
             );
           },
         );

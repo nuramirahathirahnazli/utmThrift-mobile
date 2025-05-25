@@ -68,7 +68,7 @@ class CategoryItemsScreen extends StatelessWidget {
                     name: items[index]["name"],
                     price: items[index]["price"],
                     seller: items[index]["seller"],
-                    condition: items[index]["condition"],
+                    condition: items[index]["condition"], itemId: index,
                   );
                 },
               ),

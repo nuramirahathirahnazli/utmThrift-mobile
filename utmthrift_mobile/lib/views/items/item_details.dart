@@ -1,150 +1,181 @@
-// ignore_for_file: use_super_parameters
+
+// ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
+import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
+import 'package:provider/provider.dart';
 
-class ProductDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> product;
+class ItemDetailsScreen extends StatefulWidget {
+  final int itemId;
 
-  const ProductDetailScreen({super.key, required this.product});
+  const ItemDetailsScreen({super.key, required this.itemId, required String imageUrl, required String name, required double price, required String seller, required String condition});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(product["name"])),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Image.network(product["image"], width: 200, height: 200),
-          const SizedBox(height: 20),
-          Text(product["name"], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          Text("\$${product["price"]}", style: const TextStyle(fontSize: 20, color: Colors.green)),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              // Add to cart logic here
-            },
-            child: const Text("Add to Cart"),
-          ),
-        ],
-      ),
-    );
-  }
+  State<ItemDetailsScreen> createState() => _ItemDetailsScreenState();
 }
 
+class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
+  late Future<Map<String, dynamic>?> _itemFuture;
 
-class ItemDetailsScreen extends StatelessWidget {
-  final String imageUrl;
-  final String name;
-  final double price;
-  final String seller;
-  final String condition;
-
-  const ItemDetailsScreen({
-    Key? key,
-    required this.imageUrl,
-    required this.name,
-    required this.price,
-    required this.seller,
-    required this.condition,
-  }) : super(key: key);
+  @override
+  void initState() {
+    super.initState();
+    final viewModel = Provider.of<ItemViewModel>(context, listen: false);
+    _itemFuture = viewModel.fetchItemDetails(widget.itemId);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Item Details"),
+      appBar: AppBar(title: const Text("Item Details")),
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: _itemFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          final item = snapshot.data;
+          if (item == null) {
+            return const Center(child: Text('No item details available'));
+          }
+
+          // Debug print to see the actual item structure
+          print('Item details: $item');
+
+          //Get images from the response
+          final List<dynamic> imagesDynamic = item['images'] ?? [];
+          final List<String> images = imagesDynamic.map((e) => e.toString()).toList();
+
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item['name'] ?? 'Unknown Item',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Category: ${item['category']?['name'] ?? 'Not available'}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Price: RM${num.tryParse(item['price'].toString())?.toStringAsFixed(2) ?? '0.00'}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    item['description'] ?? 'No description available',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Condition: ${item['condition'] ?? 'Unknown'}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Seller: ${item['seller']?['name'] ?? 'Unknown'}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Images:',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 150,
+                    child: images.isNotEmpty
+                        ? ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: images.length,
+                            itemBuilder: (context, index) {
+                              final imageUrl = images[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: Image.network(
+                                  imageUrl,
+                                  width: 150,
+                                  height: 150,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    print('Error loading image $imageUrl: $error');
+                                    return const Icon(Icons.broken_image, size: 50);
+                                  },
+                                ),
+                              );
+                            },
+                          )
+                        : const Center(child: Text("No images available")),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Item Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  imageUrl,
-                  width: double.infinity,
-                  height: 250,
-                  fit: BoxFit.cover,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Chat with seller feature coming soon.")),
+                  );
+                },
+                icon: const Icon(Icons.chat),
+                label: const Text("Chat Seller"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(fontSize: 16),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Item Name
-              Text(
-                name,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Item added to cart.")),
+                  );
+                },
+                icon: const Icon(Icons.shopping_cart),
+                label: const Text("Add to Cart"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(fontSize: 16),
+                ),
               ),
-
-              // Price
-              Text(
-                "RM ${price.toStringAsFixed(2)}",
-                style: const TextStyle(fontSize: 20, color: Colors.orange, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Condition
-              Row(
-                children: [
-                  const Icon(Icons.info_outline, size: 16, color: Colors.grey),
-                  const SizedBox(width: 5),
-                  Text(
-                    condition,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Seller Info
-              Row(
-                children: [
-                  const Icon(Icons.person, size: 18, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    "Seller: $seller",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Handle Chat with Seller action
-                    },
-                    icon: const Icon(Icons.chat),
-                    label: const Text("Chat Seller"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Handle Add to Cart action
-                    },
-                    icon: const Icon(Icons.shopping_cart),
-                    label: const Text("Add to Cart"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  
 }

@@ -109,24 +109,27 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildEventSection(context),
-            const SizedBox(height: 20),
-            _buildSectionHeader("Popular Categories"),
-            _buildCategoryList(context),
-            const SizedBox(height: 20),
-            _buildSectionHeader("Daily Explore"), //daily explore hanya akan keluar kan yang latest item dari database (up to 20)
-            _buildProductGrid(),
-          ],
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32), // extra bottom padding
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildEventSection(context),
+              const SizedBox(height: 20),
+              _buildSectionHeader("Popular Categories"),
+              _buildCategoryList(context),
+              const SizedBox(height: 20),
+              _buildSectionHeader("Daily Explore"),
+              _buildProductGrid(),
+            ],
+          ),
         ),
       ),
     );
   }
+
 
   Widget _buildEventSection(BuildContext context) {
     return Column(
@@ -295,7 +298,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               name: item.name,
               price: item.price,
               condition: item.condition, 
-              seller: '',
+              seller: item.seller ?? '', itemId: item.id,
             );
           },
         );

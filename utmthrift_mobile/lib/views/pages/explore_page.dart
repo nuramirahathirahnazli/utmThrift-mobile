@@ -1,10 +1,14 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
+
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
+import 'package:utmthrift_mobile/views/shared/colors.dart';
+
 import 'package:utmthrift_mobile/models/item_model.dart';
 import 'package:utmthrift_mobile/services/item_service.dart';
-import 'package:utmthrift_mobile/views/shared/colors.dart';
+
+import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
@@ -78,7 +82,8 @@ class _ExplorePageState extends State<ExplorePage> {
       setState(() => _isLoading = true);
       final searchQuery = _searchController.text.toLowerCase();
       final allItems = await _itemService.fetchAllItems();
-
+      print(allItems.map((i) => 'Item: ${i.name}, Seller: ${i.seller}').toList());
+      
       final filteredItems = allItems.where((item) {
         final matchesSearch =
             searchQuery.isEmpty || item.name.toLowerCase().contains(searchQuery);
@@ -276,49 +281,16 @@ class _ExplorePageState extends State<ExplorePage> {
                             childAspectRatio: 0.7,
                           ),
                           itemBuilder: (context, index) {
-                            final item = _items[index];
-                            final imageUrl = (item.imageUrls.isNotEmpty && item.imageUrls[0].isNotEmpty)
-                                ? item.imageUrls[0]
-                                : null;
-                            return Card(
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(
-                                          top: Radius.circular(10)),
-                                      child: imageUrl != null
-                                          ? Image.network(
-                                              imageUrl,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) =>
-                                                  const Center(child: Icon(Icons.broken_image)),
-                                            )
-                                          : const Center(child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey)),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      item.name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                                    child: Text("RM ${item.price.toStringAsFixed(2)}"),
-                                  ),
-                                ],
-                              ),
-                            );
+                          final item = _items[index];
+                            return ItemCardExplore(
+                              imageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
+                              name: item.name,
+                              price: item.price,
+                              condition: item.condition, 
+                              seller: item.seller ?? '',
+                              itemId: item.id,);
                           },
+
                         ),
                       ),
           ),
@@ -327,6 +299,3 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 }
-
-//sambung ikut yang dekat sticky notes. jangan lupa commit dulu untuk : 
-//sprint 3 : explore page

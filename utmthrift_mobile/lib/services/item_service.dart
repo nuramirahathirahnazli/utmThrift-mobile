@@ -146,7 +146,7 @@ class ItemService {
     if (token == null) throw Exception("User is not authenticated");
 
     final response = await http.get(
-      Uri.parse('$baseUrl/items/$id'),
+      Uri.parse('$baseUrl/buyer/items/$id'),
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer $token',
@@ -157,9 +157,12 @@ class ItemService {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         final item = data['item'];
+
+        //Handle images
         final List<dynamic> imagesDynamic = item['images'] ?? [];
         final List<String> images = imagesDynamic.map((e) => e.toString()).toList();
         item['images'] = images;
+        
         return item;
       } else {
         throw Exception('Failed to fetch item: ${data['message']}');

@@ -47,7 +47,7 @@ class ItemCardExplore extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         elevation: 3,
         child: SizedBox(
-          height: 220,
+          height: 250,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -63,56 +63,56 @@ class ItemCardExplore extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              name,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 14),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(), // disable actual scroll but allow layout flexibility
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 14),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             ),
-                          ),
-                          
-                          IconButton(
-                            icon: Icon(
-                              isFavorite ? Icons.favorite : Icons.favorite_border,
-                              color: isFavorite ? Colors.red : Colors.grey,
-                              size: 20,
+                            IconButton(
+                              icon: Icon(
+                                isFavorite ? Icons.favorite : Icons.favorite_border,
+                                color: isFavorite ? Colors.red : Colors.grey,
+                                size: 20,
+                              ),
+                              onPressed: onFavoriteToggle,
                             ),
-                            onPressed: onFavoriteToggle,
-                          ),
-                        ],
-                      ),
-                      Text("RM ${price.toStringAsFixed(2)}",
-                          style: const TextStyle(
-                              color: Colors.orange, fontSize: 14)),
-                      Text(condition,
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey)),
-                      const Spacer(),
-                      Row(
-                        children: [
-                          const Icon(Icons.person, size: 12, color: Colors.grey),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              seller,
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey),
-                              overflow: TextOverflow.ellipsis,
+                          ],
+                        ),
+                        Text("RM ${price.toStringAsFixed(2)}",
+                            style: const TextStyle(color: Colors.orange, fontSize: 14)),
+                        Text(condition,
+                            style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.person, size: 12, color: Colors.grey),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                seller,
+                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
+
             ],
           ),
         ),

@@ -1,15 +1,25 @@
-// ignore_for_file: library_private_types_in_public_api, avoid_print
+// ignore_for_file: avoid_print, use_build_context_synchronously, library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:utmthrift_mobile/services/auth_service.dart';
+import 'package:utmthrift_mobile/services/item_service.dart';
+
 import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
+
 import 'package:utmthrift_mobile/views/events/all_events_page.dart';
 import 'package:utmthrift_mobile/views/events/event_details_page.dart';
+
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 import 'package:utmthrift_mobile/views/items/item_category.dart';
+
 import 'package:utmthrift_mobile/views/pages/explore_page.dart';
+import 'package:utmthrift_mobile/views/pages/my_likes_page.dart';
 import 'package:utmthrift_mobile/views/pages/profile_page.dart';
+
 import 'package:utmthrift_mobile/views/shared/bottom_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 import 'package:utmthrift_mobile/views/shared/hamburger_menu.dart';
@@ -26,14 +36,111 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final String userType = 'Buyer';
 
-  // Add this controller
   final TextEditingController _searchController = TextEditingController();
+
+  final ItemService _itemService = ItemService();
+  
+  DateTime? _lastFavoriteTap;
+
+  int? _userId;
+
+  Set<int> _favoriteItemIds = <int>{};
 
   // Handle search submitted action
   void _onSearchSubmitted(String value) {
     // You can handle search here, e.g. navigate or filter items
     print('Search submitted: $value');
   }
+
+void _toggleFavorite(int itemId) async {
+  if (_userId == null) {
+    print('User not logged in, cannot toggle favorite.');
+    return;
+  }
+  
+  if (_lastFavoriteTap != null && DateTime.now().difference(_lastFavoriteTap!) < const Duration(milliseconds: 500)) {
+    return;
+  }
+  _lastFavoriteTap = DateTime.now();
+
+  setState(() {
+    if (_favoriteItemIds.contains(itemId)) {
+      _favoriteItemIds.remove(itemId);
+    } else {
+      _favoriteItemIds.add(itemId);
+    }
+  });
+
+  try {
+    await _itemService.addFavorite(_userId!, itemId);
+  } catch (e) {
+    // revert on failure
+    setState(() {
+      if (_favoriteItemIds.contains(itemId)) {
+        _favoriteItemIds.remove(itemId);
+      } else {
+        _favoriteItemIds.add(itemId);
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Failed to update favorite. Please try again.')),
+  );
+  print('Error toggling favorite: $e');
+  }
+}
+
+ @override
+  void initState() {
+    super.initState();
+    _initUserAndData();
+  }
+
+
+  Future<void> _initUserAndData() async {
+    _userId = await AuthService.getCurrentUserId();
+    if (_userId == null) {
+      // Handle user not logged in (optional)
+      print('No logged-in user found.');
+      return;
+    }
+    await _loadCachedFavorites();
+    await _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    if (_userId == null) return; // user not logged in
+    try {
+      final Set<int> favoriteIds = await _itemService.fetchFavoriteItemIds(_userId!);
+      if (mounted) {
+        setState(() {
+          _favoriteItemIds = favoriteIds;
+        });
+      }
+      _cacheFavorites();
+    } catch (e) {
+      print('Failed to load favorites: $e');
+    }
+  }
+
+  // Cache favorites locally (dummy implementation, replace with actual caching if needed)
+  Future<void> _cacheFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      'favorites', 
+      _favoriteItemIds.map((id) => id.toString()).toList(),
+    );
+  }
+
+  // Dummy implementation for loading cached favorites
+  Future<void> _loadCachedFavorites() async {
+   final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getStringList('favorites') ?? [];
+    setState(() {
+      _favoriteItemIds = cached.map((id) => int.parse(id)).toSet();
+    });
+  }
+
+
 
    @override
   void dispose() {
@@ -71,23 +178,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return const HomeScreenContent();
+        return HomeScreenContent(
+          favoriteItemIds: _favoriteItemIds,
+          onFavoriteToggle: _toggleFavorite,
+          userId: _userId,
+          itemService: _itemService,);
       case 1:
         return const ExplorePage();
       case 2:
         return const Center(child: Text("Notifications Page - Coming Soon"));
       case 3:
-        return const Center(child: Text("My Likes Page - Coming Soon"));
+        return MyLikesPage(
+        userId: _userId!,
+        favoriteItemIds: _favoriteItemIds,
+        onFavoriteToggle: _toggleFavorite,
+      );
       case 4:
         return ProfilePage(userType: userType);
       default:
-        return const HomeScreenContent();
+        return HomeScreenContent(favoriteItemIds: const <int>{}, onFavoriteToggle: (int _) {}, userId: null, itemService: ItemService(),);
     }
   }
 }
 
 class HomeScreenContent extends StatefulWidget {
-  const HomeScreenContent({super.key});
+  final Set<int> favoriteItemIds;
+  final Function(int) onFavoriteToggle;
+  final int? userId;
+  final ItemService itemService;
+  
+  const HomeScreenContent({
+    super.key,
+    required this.favoriteItemIds,
+    required this.onFavoriteToggle,
+    required this.userId,
+    required this.itemService,
+  });
 
   @override
   _HomeScreenContentState createState() => _HomeScreenContentState();
@@ -203,7 +329,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   }
 
   Widget _buildCategoryList(BuildContext context) {
-    List<Map<String, dynamic>> categories = [
+    final List<Map<String, dynamic>> categories = [
       { "icon": Icons.woman, "name": "Women Clothes" },
       { "icon": Icons.man, "name": "Men Clothes" },
       { "icon": Icons.favorite, "name": "Beauty & Health" },
@@ -300,11 +426,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               condition: item.condition, 
               seller: item.seller ?? '', 
               itemId: item.id,
-              isFavorite: false, // placeholder, update with actual logic if needed
-              onFavoriteToggle: () {
-                // placeholder function, update with favorite toggle logic
-                print("Toggled favorite for item ${item.id}");
-              },
+              isFavorite: widget.favoriteItemIds.contains(item.id),
+              onFavoriteToggle: () => widget.onFavoriteToggle(item.id),
             );
           },
         );

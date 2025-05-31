@@ -130,7 +130,13 @@ class AuthService {
     );
   }
 
-  // Get Token from SharedPreferences
+   // Get current logged-in user ID from SharedPreferences
+  static Future<int?> getCurrentUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('user_id');
+  }
+
+  // get current user token (make it static for convenience)
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
 import 'package:shared_preferences/shared_preferences.dart'; // Add this import
+import 'package:utmthrift_mobile/services/auth_service.dart';
 
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
@@ -26,8 +27,7 @@ class _ExplorePageState extends State<ExplorePage> {
   bool _isLoading = false;
   DateTime? _lastFavoriteTap;
 
-  // Dummy current user ID (replace with real auth logic)
-  final int userId = 25;
+  int? _userId;
 
   final List<String> _categories = [
     "Women Clothes", "Books & Notes", "Electronics", "Beauty & Health",
@@ -73,11 +73,26 @@ class _ExplorePageState extends State<ExplorePage> {
     _searchController.addListener(() {
       _loadItems();
     });
+
+    _initUserAndData();
+  }
+
+  Future<void> _initUserAndData() async {
+    _userId = await AuthService.getCurrentUserId();
+    if (_userId == null) {
+      // Handle user not logged in (optional)
+      print('No logged-in user found.');
+      return;
+    }
+    await _loadCachedFavorites();
+    await _loadFavorites();
+    await _loadItems();
   }
 
   Future<void> _loadFavorites() async {
+    if (_userId == null) return; // user not logged in
     try {
-      final Set<int> favoriteIds = await _itemService.fetchFavoriteItemIds(userId);
+      final Set<int> favoriteIds = await _itemService.fetchFavoriteItemIds(_userId!);
       if (mounted) {
         setState(() {
           _favoriteItemIds = favoriteIds;
@@ -320,7 +335,7 @@ class _ExplorePageState extends State<ExplorePage> {
                                   });
                                   
                                   // Call API to toggle favorite
-                                  await _itemService.addFavorite(userId, item.id);
+                                  await _itemService.addFavorite(_userId!, item.id);
                                   
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(

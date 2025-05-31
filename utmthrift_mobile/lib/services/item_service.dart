@@ -171,7 +171,8 @@ class ItemService {
     }
   }
 
-  // Fetch favorite items for a user
+  // Fetch favorite items for a user. 
+  // But this only fetch ids, not all the data of that item
   Future<Set<int>> fetchFavoriteItemIds(int userId) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -240,6 +241,31 @@ class ItemService {
     );
 
     return response.statusCode == 200;
+  }
+
+  // Fetch favourited items for a user with full details of items
+  Future<List<Item>> fetchAllFavouritedItems(List<int> ids) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print("Token  : $token");
+
+    if (token == null) throw Exception("User is not authenticated");
+    if (ids.isEmpty) return [];
+
+    final String idsParam = ids.join(',');
+    final response = await http.get(
+      Uri.parse('$baseUrl/items/all-favourited?ids=$idsParam'),
+      headers: {
+        'Authorization': 'Bearer $token',  // Add this header to authenticate
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => Item.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to fetch items by IDs');
+    }
   }
 
 

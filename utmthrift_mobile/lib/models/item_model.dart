@@ -58,7 +58,7 @@ class Item {
       name: json['name'] as String,
       description: json['description'] as String,
       price: double.tryParse(json['price'].toString()) ?? 0.0,
-      condition: json['condition'] as String,
+       condition: json['condition'] ?? '',
       imageUrls: images,
       category: categoryName,
       seller: sellerName,

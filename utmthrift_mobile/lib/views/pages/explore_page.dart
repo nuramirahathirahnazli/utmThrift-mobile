@@ -1,13 +1,13 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // For HapticFeedback
+import 'package:shared_preferences/shared_preferences.dart'; // Add this import
 
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
-
 import 'package:utmthrift_mobile/models/item_model.dart';
 import 'package:utmthrift_mobile/services/item_service.dart';
-
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -22,53 +22,71 @@ class _ExplorePageState extends State<ExplorePage> {
   final ItemService _itemService = ItemService();
 
   List<Item> _items = [];
+  Set<int> _favoriteItemIds = {};
   bool _isLoading = false;
+  DateTime? _lastFavoriteTap;
 
-  // Categories list (horizontal chips)
+  // Dummy current user ID (replace with real auth logic)
+  final int userId = 25;
+
   final List<String> _categories = [
-    "Women Clothes",
-    "Books & Notes",
-    "Electronics",
-    "Beauty & Health",
-    "Men Clothes",
-    "Furniture",
-    "Sports & Outdoors",
-    "Toys & Games",
-    "Home Appliances",
-    "Jewelry & Accessories",
-    "Pet Supplies",
+    "Women Clothes", "Books & Notes", "Electronics", "Beauty & Health",
+    "Men Clothes", "Furniture", "Sports & Outdoors", "Toys & Games",
+    "Home Appliances", "Jewelry & Accessories", "Pet Supplies"
   ];
 
-  // Conditions list for modal filter
   final List<String> _conditions = [
-    'Brand New',
-    'Like New',
-    'Lightly Used',
-    'Well Used',
-    'Heavily Used',
+    'Brand New', 'Like New', 'Lightly Used', 'Well Used', 'Heavily Used',
   ];
 
-  // Price ranges for modal filter
   final List<String> _priceRanges = [
-    'Under RM50',
-    'RM50 - RM100',
-    'RM100 - RM200',
-    'Above RM200',
+    'Under RM50', 'RM50 - RM100', 'RM100 - RM200', 'Above RM200',
   ];
 
-  // Selected filters
   String? _selectedCategory;
   String? _selectedCondition;
   String? _selectedPriceRange;
+
+  Future<void> _cacheFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      'favorites', 
+      _favoriteItemIds.map((id) => id.toString()).toList(),
+    );
+  }
+
+  Future<void> _loadCachedFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getStringList('favorites') ?? [];
+    setState(() {
+      _favoriteItemIds = cached.map((id) => int.parse(id)).toSet();
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     _loadItems();
-
+    _loadCachedFavorites();
+    _loadFavorites();
+    
     _searchController.addListener(() {
       _loadItems();
     });
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      final Set<int> favoriteIds = await _itemService.fetchFavoriteItemIds(userId);
+      if (mounted) {
+        setState(() {
+          _favoriteItemIds = favoriteIds;
+        });
+      }
+      _cacheFavorites();
+    } catch (e) {
+      print('Failed to load favorites: $e');
+    }
   }
 
   @override
@@ -82,8 +100,7 @@ class _ExplorePageState extends State<ExplorePage> {
       setState(() => _isLoading = true);
       final searchQuery = _searchController.text.toLowerCase();
       final allItems = await _itemService.fetchAllItems();
-      print(allItems.map((i) => 'Item: ${i.name}, Seller: ${i.seller}').toList());
-      
+
       final filteredItems = allItems.where((item) {
         final matchesSearch =
             searchQuery.isEmpty || item.name.toLowerCase().contains(searchQuery);
@@ -96,9 +113,11 @@ class _ExplorePageState extends State<ExplorePage> {
         return matchesSearch && matchesCategory && matchesCondition && matchesPrice;
       }).toList();
 
-      setState(() {
-        _items = filteredItems;
-      });
+      if (mounted) {
+        setState(() {
+          _items = filteredItems;
+        });
+      }
     } catch (e) {
       print("Error loading items: $e");
     } finally {
@@ -149,8 +168,6 @@ class _ExplorePageState extends State<ExplorePage> {
                 children: [
                   const Text("Filter by", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-
-                  // Condition Dropdown only
                   DropdownButtonFormField<String>(
                     value: tempCondition,
                     hint: const Text("Select Condition"),
@@ -160,8 +177,6 @@ class _ExplorePageState extends State<ExplorePage> {
                         .toList(),
                   ),
                   const SizedBox(height: 12),
-
-                  // Price Range Dropdown only
                   DropdownButtonFormField<String>(
                     value: tempPriceRange,
                     hint: const Text("Select Price Range"),
@@ -171,7 +186,6 @@ class _ExplorePageState extends State<ExplorePage> {
                         .toList(),
                   ),
                   const SizedBox(height: 20),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -218,7 +232,6 @@ class _ExplorePageState extends State<ExplorePage> {
       drawer: const Drawer(),
       body: Column(
         children: [
-          // Categories Row (horizontal chips)
           SizedBox(
             height: 50,
             child: ListView(
@@ -244,8 +257,6 @@ class _ExplorePageState extends State<ExplorePage> {
               }).toList(),
             ),
           ),
-
-          // Filter Button for condition and price only
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
@@ -263,8 +274,6 @@ class _ExplorePageState extends State<ExplorePage> {
               ],
             ),
           ),
-
-          // Item Grid
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -281,16 +290,64 @@ class _ExplorePageState extends State<ExplorePage> {
                             childAspectRatio: 0.7,
                           ),
                           itemBuilder: (context, index) {
-                          final item = _items[index];
+                            final item = _items[index];
                             return ItemCardExplore(
                               imageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
                               name: item.name,
                               price: item.price,
-                              condition: item.condition, 
+                              condition: item.condition,
                               seller: item.seller ?? '',
-                              itemId: item.id,);
+                              itemId: item.id,
+                              isFavorite: _favoriteItemIds.contains(item.id),
+                              onFavoriteToggle: () async {
+                                try {
+                                  if (_lastFavoriteTap != null && 
+                                      DateTime.now().difference(_lastFavoriteTap!) < const Duration(milliseconds: 500)) {
+                                    return;
+                                  }
+                                  _lastFavoriteTap = DateTime.now();
+                                  
+                                  // Haptic feedback
+                                  await HapticFeedback.lightImpact();
+                                  
+                                  // Optimistically update UI
+                                  setState(() {
+                                    if (_favoriteItemIds.contains(item.id)) {
+                                      _favoriteItemIds.remove(item.id);
+                                    } else {
+                                      _favoriteItemIds.add(item.id);
+                                    }
+                                  });
+                                  
+                                  // Call API to toggle favorite
+                                  await _itemService.addFavorite(userId, item.id);
+                                  
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(_favoriteItemIds.contains(item.id)
+                                            ? 'Added to favorites!'
+                                            : 'Removed from favorites'),
+                                        duration: const Duration(seconds: 1),
+                                    ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  // Revert UI if API call fails
+                                  if (mounted) {
+                                    setState(() {
+                                      if (_favoriteItemIds.contains(item.id)) {
+                                        _favoriteItemIds.remove(item.id);
+                                      } else {
+                                        _favoriteItemIds.add(item.id);
+                                      }
+                                    });
+                                  }
+                                  print('Error toggling favorite: $e');
+                                }
+                              },
+                            );
                           },
-
                         ),
                       ),
           ),

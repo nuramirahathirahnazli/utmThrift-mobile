@@ -298,7 +298,13 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               name: item.name,
               price: item.price,
               condition: item.condition, 
-              seller: item.seller ?? '', itemId: item.id,
+              seller: item.seller ?? '', 
+              itemId: item.id,
+              isFavorite: false, // placeholder, update with actual logic if needed
+              onFavoriteToggle: () {
+                // placeholder function, update with favorite toggle logic
+                print("Toggled favorite for item ${item.id}");
+              },
             );
           },
         );

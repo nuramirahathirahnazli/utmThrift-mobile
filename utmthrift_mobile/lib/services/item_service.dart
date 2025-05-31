@@ -63,7 +63,6 @@ class ItemService {
     }
   }
 
-
   //Fetch latest 20 items for user homescreen purpose
   static Future<List<Item>> fetchLatestItems({int limit = 20}) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -171,6 +170,78 @@ class ItemService {
       throw Exception('Failed to load item');
     }
   }
+
+  // Fetch favorite items for a user
+  Future<Set<int>> fetchFavoriteItemIds(int userId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      print("Token: $token");
+
+      if (token == null) throw Exception("User is not authenticated");
+
+      print('Fetching favorites for userId: $userId');
+      final response = await http.get(Uri.parse('$baseUrl/item/favourites'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      
+      print('GET response status: ${response.statusCode}');
+      print('GET response body: ${response.body}');
+      
+
+      if (response.statusCode == 200) {
+      final List<dynamic> favorites = jsonDecode(response.body);
+      // Explicitly cast to Set<int>
+      return favorites.map<int>((fav) => fav['id'] as int).toSet();
+    }
+    return <int>{}; // Return empty Set<int>
+  } catch (e) {
+    print('Error fetching favorites: $e');
+    return <int>{}; // Return empty Set<int>
+  }
+}
+
+  // Add favorite item for a user
+  Future<bool> addFavorite(int userId, int itemId) async {
+    
+    print('Toggling favorite for userId: $userId, itemId: $itemId');
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print("Token: $token");
+
+    if (token == null) throw Exception("User is not authenticated");
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/item/$itemId/toggle-favourite'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      }
+    );  
+
+    print('POST response status: ${response.statusCode}');
+    print('POST response body: ${response.body}');
+
+    return response.statusCode == 201;
+  }
+
+  // Remove favorite item for a user
+  Future<bool> removeFavorite(int userId, int itemId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/favorites/remove'),
+      body: {
+        'user_id': userId.toString(),
+        'item_id': itemId.toString(),
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
 
   // Add item
   Future<Item?> addItem({

@@ -1,5 +1,3 @@
-// ignore_for_file: use_super_parameters
-
 import 'package:flutter/material.dart';
 import 'package:utmthrift_mobile/views/items/item_details.dart';
 
@@ -10,17 +8,22 @@ class ItemCardExplore extends StatelessWidget {
   final double price;
   final String seller;
   final String condition;
+  final bool isFavorite;
+  final VoidCallback onFavoriteToggle;
 
   const ItemCardExplore({
-    Key? key,
+    super.key,
     required this.itemId,
     required this.imageUrl,
     required this.name,
     required this.price,
     required this.seller,
     required this.condition,
-  }) : super(key: key);
+    required this.isFavorite,
+    required this.onFavoriteToggle,
+  });
 
+  
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -33,7 +36,7 @@ class ItemCardExplore extends StatelessWidget {
               name: name,
               price: price,
               seller: seller,
-              condition: condition, 
+              condition: condition,
               itemId: itemId,
             ),
           ),
@@ -44,7 +47,7 @@ class ItemCardExplore extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         elevation: 3,
         child: SizedBox(
-          height: 220, // tweak this height based on your layout
+          height: 220,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -63,27 +66,46 @@ class ItemCardExplore extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              name,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                          
+                          IconButton(
+                            icon: Icon(
+                              isFavorite ? Icons.favorite : Icons.favorite_border,
+                              color: isFavorite ? Colors.red : Colors.grey,
+                              size: 20,
+                            ),
+                            onPressed: onFavoriteToggle,
+                          ),
+                        ],
+                      ),
                       Text("RM ${price.toStringAsFixed(2)}",
                           style: const TextStyle(
                               color: Colors.orange, fontSize: 14)),
                       Text(condition,
                           style:
                               const TextStyle(fontSize: 12, color: Colors.grey)),
-                      const Spacer(), // pushes the Row to the bottom
+                      const Spacer(),
                       Row(
                         children: [
                           const Icon(Icons.person, size: 12, color: Colors.grey),
                           const SizedBox(width: 5),
                           Expanded(
-                            child: Text(seller,
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
-                                overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              seller,
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -95,7 +117,6 @@ class ItemCardExplore extends StatelessWidget {
           ),
         ),
       ),
-
     );
   }
 }

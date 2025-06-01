@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
 import 'package:utmthrift_mobile/views/events/all_events_page.dart';
 import 'package:utmthrift_mobile/views/events/event_details_page.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
@@ -48,6 +49,8 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cartViewModel = Provider.of<CartViewModel>(context);
+
     return Scaffold(
       drawer: HamburgerMenu(
         userType: 'Seller', // or pass dynamically
@@ -59,6 +62,10 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
       appBar: _selectedIndex == 0 ? TopNavBar(
         searchController: _searchController,
         onSearchSubmitted: _onSearchSubmitted,
+        cartCount: cartViewModel.totalQuantity,
+        onCartPressed: () {
+          Navigator.pushNamed(context, '/cartPage'); // or your cart route
+        },
       ) : null,
       body: _getPage(_selectedIndex),
       bottomNavigationBar: BottomNavBar(

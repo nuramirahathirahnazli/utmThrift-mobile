@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Add this import
 import 'package:utmthrift_mobile/services/auth_service.dart';
+import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
 
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
@@ -239,10 +241,16 @@ class _ExplorePageState extends State<ExplorePage> {
 
   @override
   Widget build(BuildContext context) {
+    final cartViewModel = Provider.of<CartViewModel>(context);
+    
     return Scaffold(
       appBar: TopNavBar(
         searchController: _searchController,
         onSearchSubmitted: (_) => _loadItems(),
+        cartCount: cartViewModel.totalQuantity,
+        onCartPressed: () {
+          Navigator.pushNamed(context, '/cartPage'); // or your cart route
+        },
       ),
       drawer: const Drawer(),
       body: Column(

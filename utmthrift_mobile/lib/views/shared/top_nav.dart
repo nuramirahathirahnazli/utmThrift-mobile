@@ -4,11 +4,15 @@ import 'package:utmthrift_mobile/views/shared/colors.dart';
 class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
   final TextEditingController searchController;
   final Function(String) onSearchSubmitted;
+  final int cartCount;
+  final VoidCallback onCartPressed;
 
   const TopNavBar({
     super.key,
     required this.searchController,
     required this.onSearchSubmitted,
+    required this.cartCount,
+    required this.onCartPressed,
   });
 
   @override
@@ -44,7 +48,38 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.shopping_cart), onPressed: () {}),
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_cart),
+                onPressed: onCartPressed,
+              ),
+              if (cartCount > 0)
+                Positioned(
+                  right: 6,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$cartCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(icon: const Icon(Icons.chat), onPressed: () {}),
         ],
       ),

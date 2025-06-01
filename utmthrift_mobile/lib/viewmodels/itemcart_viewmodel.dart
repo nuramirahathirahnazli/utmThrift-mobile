@@ -13,6 +13,11 @@ class CartViewModel with ChangeNotifier {
   Map<int, CartItem> get items => {..._items};
 
   int get itemCount => _items.length;
+  
+  int get totalQuantity {
+    return _items.values.fold(0, (sum, item) => sum + item.quantity);
+  }
+
 
   double get totalAmount {
     return _items.values.fold(
@@ -24,6 +29,7 @@ class CartViewModel with ChangeNotifier {
   Future<void> loadCartItems() async {
     try {
       final cartItems = await _cartService.fetchCartItems();
+      print('Fetched cart items: $cartItems');
       _items.clear();
       for (var cartItem in cartItems) {
         _items[cartItem.itemId] = cartItem;
@@ -51,7 +57,7 @@ class CartViewModel with ChangeNotifier {
         itemId: item.id,
         name: item.name,
         price: item.price,
-        quantity: quantity,
+        quantity: quantity, 
       );
     }
     notifyListeners();

@@ -15,18 +15,20 @@ class CartItem {
   double get totalPrice => price * quantity;
 
   Map<String, dynamic> toJson() => {
-        'itemId': itemId,
+        'item_id': itemId,
         'name': name,
         'price': price,
         'quantity': quantity,
       };
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    final itemData = json['item'];
     return CartItem(
-      itemId: json['itemId'],
-      name: json['name'],
-      price: (json['price'] as num).toDouble(),
+      itemId: json['item_id'],
+      name: itemData['name'],
+      price: double.parse(itemData['price']),
       quantity: json['quantity'],
     );
   }
+
 }

@@ -9,6 +9,7 @@ import 'package:utmthrift_mobile/services/item_service.dart';
 
 import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
 
 import 'package:utmthrift_mobile/views/events/all_events_page.dart';
 import 'package:utmthrift_mobile/views/events/event_details_page.dart';
@@ -37,11 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final String userType = 'Buyer';
 
   final TextEditingController _searchController = TextEditingController();
-
   final ItemService _itemService = ItemService();
   
   DateTime? _lastFavoriteTap;
-
   int? _userId;
 
   Set<int> _favoriteItemIds = <int>{};
@@ -52,29 +51,17 @@ class _HomeScreenState extends State<HomeScreen> {
     print('Search submitted: $value');
   }
 
-void _toggleFavorite(int itemId) async {
-  if (_userId == null) {
-    print('User not logged in, cannot toggle favorite.');
-    return;
-  }
-  
-  if (_lastFavoriteTap != null && DateTime.now().difference(_lastFavoriteTap!) < const Duration(milliseconds: 500)) {
-    return;
-  }
-  _lastFavoriteTap = DateTime.now();
-
-  setState(() {
-    if (_favoriteItemIds.contains(itemId)) {
-      _favoriteItemIds.remove(itemId);
-    } else {
-      _favoriteItemIds.add(itemId);
+  void _toggleFavorite(int itemId) async {
+    if (_userId == null) {
+      print('User not logged in, cannot toggle favorite.');
+      return;
     }
-  });
+  
+    if (_lastFavoriteTap != null && DateTime.now().difference(_lastFavoriteTap!) < const Duration(milliseconds: 500)) {
+      return;
+    }
+    _lastFavoriteTap = DateTime.now();
 
-  try {
-    await _itemService.addFavorite(_userId!, itemId);
-  } catch (e) {
-    // revert on failure
     setState(() {
       if (_favoriteItemIds.contains(itemId)) {
         _favoriteItemIds.remove(itemId);
@@ -82,19 +69,36 @@ void _toggleFavorite(int itemId) async {
         _favoriteItemIds.add(itemId);
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Failed to update favorite. Please try again.')),
-  );
-  print('Error toggling favorite: $e');
+
+    try {
+      await _itemService.addFavorite(_userId!, itemId);
+    } catch (e) {
+      // revert on failure
+      setState(() {
+        if (_favoriteItemIds.contains(itemId)) {
+          _favoriteItemIds.remove(itemId);
+        } else {
+          _favoriteItemIds.add(itemId);
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to update favorite. Please try again.')),
+    );
+    print('Error toggling favorite: $e');
+    }
   }
-}
 
  @override
   void initState() {
     super.initState();
     _initUserAndData();
-  }
 
+    // Load cart data once
+    Future.microtask(() {
+      final cartViewModel = Provider.of<CartViewModel>(context, listen: false);
+      cartViewModel.loadCartItems();
+    });
+  }
 
   Future<void> _initUserAndData() async {
     _userId = await AuthService.getCurrentUserId();
@@ -130,8 +134,7 @@ void _toggleFavorite(int itemId) async {
       _favoriteItemIds.map((id) => id.toString()).toList(),
     );
   }
-
-  // Dummy implementation for loading cached favorites
+  
   Future<void> _loadCachedFavorites() async {
    final prefs = await SharedPreferences.getInstance();
     final cached = prefs.getStringList('favorites') ?? [];
@@ -140,9 +143,7 @@ void _toggleFavorite(int itemId) async {
     });
   }
 
-
-
-   @override
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -150,6 +151,7 @@ void _toggleFavorite(int itemId) async {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       drawer: HamburgerMenu(
         userType: userType,
@@ -158,10 +160,24 @@ void _toggleFavorite(int itemId) async {
         },
       ),
       backgroundColor: AppColors.base,
-      appBar: _selectedIndex == 0 ? TopNavBar(
-        searchController: _searchController,
-        onSearchSubmitted: _onSearchSubmitted,
-      ) : null,
+      appBar: _selectedIndex == 0
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(kToolbarHeight),
+                  child: Consumer<CartViewModel>(
+                    builder: (context, cartViewModel, _) {
+                      print('CartViewModel itemCount: ${cartViewModel.itemCount}');
+                      return TopNavBar(
+                        searchController: _searchController,
+                        onSearchSubmitted: _onSearchSubmitted, // Fixed
+                        cartCount: cartViewModel.itemCount,
+                        onCartPressed: () {
+                          Navigator.pushNamed(context, '/cartPage');
+                        },
+                      );
+                    },
+                  ),
+                )
+              : null,
       body: _getPage(_selectedIndex),
       bottomNavigationBar: BottomNavBar(
         currentIndex: _selectedIndex,

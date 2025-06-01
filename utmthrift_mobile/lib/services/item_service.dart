@@ -268,7 +268,6 @@ class ItemService {
     }
   }
 
-
   // Add item
   Future<Item?> addItem({
     required String name,

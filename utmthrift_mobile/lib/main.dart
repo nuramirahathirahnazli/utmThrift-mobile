@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-
 import 'package:utmthrift_mobile/viewmodels/signup_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/signin_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
 
 import 'views/pages/welcome_page.dart';
 import 'views/seller/seller_home_page.dart';
@@ -30,6 +30,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
         ChangeNotifierProvider(create: (_) => ItemViewModel()),
         ChangeNotifierProvider(create: (_) => EventViewModel()),
+        ChangeNotifierProvider(create: (_) => CartViewModel()),
       ],
       child: const MyApp(),
     ),

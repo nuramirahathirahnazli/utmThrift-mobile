@@ -12,6 +12,7 @@ import 'views/pages/welcome_page.dart';
 import 'views/seller/seller_home_page.dart';
 import 'views/seller/seller_add_item_page.dart';
 import 'views/seller/seller_my_items_page.dart';
+import 'package:utmthrift_mobile/views/items/item_list_cart_page.dart';
 
 import 'package:utmthrift_mobile/views/pages/home_screen.dart';
 import 'views/profile/profile_screen.dart';
@@ -54,7 +55,8 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfileScreen(),
         '/add_item': (context) => const AddItemScreen(),
         '/my_items': (context) => const MyItemsPage(),
-
+        '/cartPage': (context) => const CartPage(),
+        
         // test cors
         '/test_cors': (context) =>  CORSCheckScreen(),
       },

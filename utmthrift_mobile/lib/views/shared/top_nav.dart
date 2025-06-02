@@ -54,6 +54,7 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
                 icon: const Icon(Icons.shopping_cart),
                 onPressed: onCartPressed,
               ),
+
               if (cartCount > 0)
                 Positioned(
                   right: 6,

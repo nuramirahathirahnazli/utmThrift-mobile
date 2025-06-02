@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,21 +21,21 @@ class CartService {
     };
   }
 
-  Future<List<CartItem>> fetchCartItems() async {
+  Future<List<CartItem>> fetchCartItems(int userId) async {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
 
     final response = await http.get(
-      Uri.parse('$baseUrl/cart/items'),
+      Uri.parse('$baseUrl/cart/$userId'),
       headers: _buildHeaders(token),
     );
 
+    final data = jsonDecode(response.body);
+    print('Cart API response data: $data');
+
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      // Note: API returns 'cart_items', not 'items'
-      return (data['cart_items'] as List)
-          .map((json) => CartItem.fromJson(json))
-          .toList();
+      final itemsList = data['data'] as List<dynamic>;
+      return itemsList.map((json) => CartItem.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load cart: ${response.statusCode}');
     }
@@ -57,21 +59,7 @@ class CartService {
     return response.statusCode == 200;
   }
 
-  // You may remove these if your backend doesn't support updates or removes yet
-
-  Future<bool> updateCartItem(int itemId, int quantity) async {
-    final token = await _getToken();
-    if (token == null) throw Exception('No authentication token found');
-
-    final response = await http.put(
-      Uri.parse('$baseUrl/cart/update/$itemId'),
-      headers: _buildHeaders(token),
-      body: jsonEncode({'quantity': quantity}),
-    );
-
-    return response.statusCode == 200;
-  }
-
+  // Remove item from cart
   Future<bool> removeCartItem(int itemId) async {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
@@ -84,6 +72,7 @@ class CartService {
     return response.statusCode == 200;
   }
 
+  // Checkout cart
   Future<bool> checkout() async {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');

@@ -12,12 +12,15 @@ class CartViewModel with ChangeNotifier {
 
   Map<int, CartItem> get items => {..._items};
 
-  int get itemCount => _items.length;
+  int get itemCount {
+    print('Item count: ${_items.length}');
+    return _items.length;
+  }
+
   
   int get totalQuantity {
     return _items.values.fold(0, (sum, item) => sum + item.quantity);
   }
-
 
   double get totalAmount {
     return _items.values.fold(
@@ -25,10 +28,13 @@ class CartViewModel with ChangeNotifier {
       (sum, item) => sum + item.price * item.quantity);
   }
 
-  /// Load from backend
-  Future<void> loadCartItems() async {
+  Future<List<CartItem>> fetchCartItems(int userId) async {
+    return await _cartService.fetchCartItems(userId);
+  }
+
+  Future<void> loadCartItems(int userId) async {
     try {
-      final cartItems = await _cartService.fetchCartItems();
+      final cartItems = await _cartService.fetchCartItems(userId);
       print('Fetched cart items: $cartItems');
       _items.clear();
       for (var cartItem in cartItems) {
@@ -39,6 +45,7 @@ class CartViewModel with ChangeNotifier {
       print('Error loading cart items: $e');
     }
   }
+
 
   /// Initialize cart 
   bool isItemInCart(Item item) {
@@ -57,20 +64,12 @@ class CartViewModel with ChangeNotifier {
         itemId: item.id,
         name: item.name,
         price: item.price,
-        quantity: quantity, 
+        quantity: quantity,   
+        imageUrl: item.imageUrls,
       );
     }
     notifyListeners();
     return true;
-  }
-
-  /// Update quantity
-  Future<void> updateItemQuantity(int itemId, int newQuantity) async {
-    final success = await _cartService.updateCartItem(itemId, newQuantity);
-    if (success && _items.containsKey(itemId)) {
-      _items[itemId]!.quantity = newQuantity;
-      notifyListeners();
-    }
   }
 
   /// Remove item

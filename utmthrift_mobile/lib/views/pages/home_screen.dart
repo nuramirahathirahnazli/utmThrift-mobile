@@ -94,9 +94,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _initUserAndData();
 
     // Load cart data once
-    Future.microtask(() {
+    Future.microtask(() async {
       final cartViewModel = Provider.of<CartViewModel>(context, listen: false);
-      cartViewModel.loadCartItems();
+      final userId = await AuthService.getCurrentUserId();
+      if (userId != null) {
+        cartViewModel.loadCartItems(userId);
+      }
     });
   }
 
@@ -168,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       print('CartViewModel itemCount: ${cartViewModel.itemCount}');
                       return TopNavBar(
                         searchController: _searchController,
-                        onSearchSubmitted: _onSearchSubmitted, // Fixed
+                        onSearchSubmitted: _onSearchSubmitted, 
                         cartCount: cartViewModel.itemCount,
                         onCartPressed: () {
                           Navigator.pushNamed(context, '/cartPage');

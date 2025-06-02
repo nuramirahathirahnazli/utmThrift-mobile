@@ -80,7 +80,8 @@ class _CartPageState extends State<CartPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CheckoutDetailsPage(item: item),
+                          builder: (context) => CheckoutDetailsPage(
+                            item: item),
                         ),
                       );
                     },

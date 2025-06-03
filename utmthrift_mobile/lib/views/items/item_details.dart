@@ -2,9 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:utmthrift_mobile/models/item_model.dart';
+import 'package:utmthrift_mobile/services/auth_service.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
+import 'package:utmthrift_mobile/views/chat/chat_screen.dart';
+
 
 class ItemDetailsScreen extends StatefulWidget {
   final int itemId;
@@ -31,15 +34,23 @@ class ItemDetailsScreen extends StatefulWidget {
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   late Future<Map<String, dynamic>?> _itemFuture;
   late CartViewModel _cartViewModel;
+  late int? currentUserId;
 
-  
   @override
   void initState() {
     super.initState();
+    _loadCurrentUserId();
     final viewModel = Provider.of<ItemViewModel>(context, listen: false);
     _itemFuture = viewModel.fetchItemDetails(widget.itemId);
     _cartViewModel = Provider.of<CartViewModel>(context, listen: false);
   }
+
+  Future<void> _loadCurrentUserId() async {
+  final id = await AuthService.getCurrentUserId();
+  setState(() {
+    currentUserId = id;
+  });
+}
 
   Future<void> _addToCart(Map<String, dynamic> itemData) async {
     try {
@@ -88,16 +99,13 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           }
 
           final item = snapshot.data;
-
           if (item == null) {
             return const Center(child: Text('No item details available'));
           }
 
-          print('Item details: $item');
-
-          // Extract images list safely
           final List<dynamic> imagesDynamic = item['images'] ?? [];
-          final List<String> images = imagesDynamic.map((e) => e.toString()).toList();
+          final List<String> images =
+              imagesDynamic.map((e) => e.toString()).toList();
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -175,7 +183,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                           )
                         : const Center(child: Text("No images available")),
                   ),
-                  const SizedBox(height: 100), // Extra space for bottom buttons
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -185,7 +193,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
       bottomNavigationBar: FutureBuilder<Map<String, dynamic>?>(
         future: _itemFuture,
         builder: (context, snapshot) {
-          // Disable buttons if no data loaded yet
           final isDataAvailable = snapshot.hasData && snapshot.data != null;
 
           return Padding(
@@ -193,12 +200,39 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Chat Seller Button
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Chat with seller feature coming soon.")),
+                    onPressed: () async {
+                      if (snapshot.data?['seller'] == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text("Seller information not available.")),
+                        );
+                        return;
+                      }
+
+                      final sellerId = snapshot.data!['seller']['id'];
+                      final sellerName = snapshot.data!['seller']['name'];
+                      final currentUserId = await AuthService.getCurrentUserId();
+
+                      if (currentUserId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("User not logged in.")),
+                        );
+                        return;
+                      }
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(
+                            currentUserId: currentUserId,
+                            sellerId: sellerId,
+                            itemId: snapshot.data!['id'],
+                            itemName: snapshot.data!['name'],
+                            sellerName: sellerName,
+                          ),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.chat),
@@ -211,8 +245,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-
-                // Add to Cart Button
                 Consumer<CartViewModel>(
                   builder: (context, cartViewModel, child) {
                     if (!isDataAvailable) {
@@ -230,7 +262,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                       );
                     }
 
-                    // Create an Item instance to check against the cart
                     final item = Item(
                       id: snapshot.data!['id'],
                       name: snapshot.data!['name'],
@@ -248,17 +279,19 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
                     return Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: isInCart
-                            ? null
-                            : () => _addToCart(snapshot.data!),
+                        onPressed:
+                            isInCart ? null : () => _addToCart(snapshot.data!),
                         icon: Icon(
-                          isInCart ? Icons.check_circle : Icons.shopping_cart,
+                          isInCart
+                              ? Icons.check_circle
+                              : Icons.shopping_cart,
                         ),
                         label: Text(
                           isInCart ? "Already in Cart" : "Add to Cart",
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isInCart ? Colors.grey : Colors.green,
+                          backgroundColor:
+                              isInCart ? Colors.grey : Colors.green,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           textStyle: const TextStyle(fontSize: 14),
                         ),
@@ -266,14 +299,11 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                     );
                   },
                 ),
-
                 const SizedBox(width: 8),
-
-                // Buy Now Button
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/payment'); // Adjust route as needed
+                      Navigator.pushNamed(context, '/payment');
                     },
                     icon: const Icon(Icons.payment),
                     label: const Text("Buy"),

@@ -1,27 +1,29 @@
 class UserModel {
+  final int id;
   final String name;
   final String email;
-  final String contact;
-  final String matric;
+  final String? contact;
+  final String? matric;
   final String? profilePicture;
-  final String userType; 
-  final String gender; 
-  final String location; 
-  final String userRole; 
-  final DateTime createdAt;
+  final String userType;
+  final String? gender;
+  final String? location;
+  final String? userRole;
+  final DateTime? createdAt;
   final String createdAtFormatted;
 
   UserModel({
+    required this.id,
     required this.name,
     required this.email,
-    required this.contact,
-    required this.matric,
+    this.contact,
+    this.matric,
     this.profilePicture,
     required this.userType,
-    required this.gender,
-    required this.location,
-    required this.userRole,
-    required this.createdAt,
+    this.gender,
+    this.location,
+    this.userRole,
+    this.createdAt,
     this.createdAtFormatted = "",
   });
 
@@ -30,6 +32,7 @@ class UserModel {
      String? profilePic = json['profile_picture'];
 
     return UserModel(
+      id: json['id'],
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       contact: json['contact'] ?? '',
@@ -39,12 +42,14 @@ class UserModel {
       gender: json['gender'] ?? '',
       location: json['location'] ?? '',
       userRole: json['user_role'] ?? '',
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'] == null ? null : DateTime.parse(json['created_at']),
+
     );
   }
 
   // CopyWith method to allow easy updates to the UserModel object
   UserModel copyWith({
+    int? id,
     String? name,
     String? email,
     String? contact,
@@ -58,6 +63,7 @@ class UserModel {
     String? createdAtFormatted,
   }) {
     return UserModel(
+      id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
       contact: contact ?? this.contact,

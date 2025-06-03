@@ -3,7 +3,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
 import 'package:utmthrift_mobile/views/auth/sign_in.dart';
 
 class AuthService {
@@ -74,8 +76,6 @@ class AuthService {
     }
   }
 
-
- 
   // Logout Function
   static Future<void> logout(BuildContext context) async {
     bool? confirmLogout = await showDialog(
@@ -123,6 +123,8 @@ class AuthService {
     await prefs.remove('user_id');
     await prefs.remove('user_type'); 
 
+    Provider.of<CartViewModel>(context, listen: false).clearCart();
+    
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => SignInScreen()),
@@ -142,7 +144,8 @@ class AuthService {
     return prefs.getString('token');
   }
 
- 
-  
-
+  static Future<String?> getUserType() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_type');
+  }
 }

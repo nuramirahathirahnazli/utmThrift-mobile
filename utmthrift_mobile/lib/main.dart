@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+
 import 'package:utmthrift_mobile/viewmodels/signup_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/signin_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/user_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/chatmessage_viewmodel.dart';
 
 import 'views/pages/welcome_page.dart';
 import 'views/seller/seller_home_page.dart';
 import 'views/seller/seller_add_item_page.dart';
 import 'views/seller/seller_my_items_page.dart';
-import 'package:utmthrift_mobile/views/items/item_list_cart_page.dart';
+import 'views/items/item_list_cart_page.dart';
 
-import 'package:utmthrift_mobile/views/pages/home_screen.dart';
+import 'views/pages/home_screen.dart';
 import 'views/profile/profile_screen.dart';
 import 'views/auth/sign_up.dart';
 import 'views/auth/sign_in.dart';
@@ -32,7 +35,9 @@ void main() {
         ChangeNotifierProvider(create: (_) => ItemViewModel()),
         ChangeNotifierProvider(create: (_) => EventViewModel()),
         ChangeNotifierProvider(create: (_) => CartViewModel()),
-      ],
+        ChangeNotifierProvider(create: (_) => UserViewModel()),
+        ChangeNotifierProvider(create: (_) => ChatMessageViewModel()),
+    ],
       child: const MyApp(),
     ),
   );

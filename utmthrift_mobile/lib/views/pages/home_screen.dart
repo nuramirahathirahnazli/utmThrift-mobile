@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:utmthrift_mobile/services/auth_service.dart';
 import 'package:utmthrift_mobile/services/item_service.dart';
+import 'package:utmthrift_mobile/viewmodels/chatmessage_viewmodel.dart';
 
 import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
@@ -153,46 +154,53 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+Widget build(BuildContext context) {
+  return Consumer<ChatMessageViewModel>(
+    builder: (context, chatVM, child) {
+      final unreadChatCount = chatVM.unreadMessageCount;
 
-    return Scaffold(
-      drawer: HamburgerMenu(
-        userType: userType,
-        onLogout: () {
-          Navigator.pushReplacementNamed(context, '/login');
-        },
-      ),
-      backgroundColor: AppColors.base,
-      appBar: _selectedIndex == 0
-              ? PreferredSize(
-                  preferredSize: const Size.fromHeight(kToolbarHeight),
-                  child: Consumer<CartViewModel>(
-                    builder: (context, cartViewModel, _) {
-                      print('CartViewModel itemCount: ${cartViewModel.itemCount}');
-                      return TopNavBar(
-                        searchController: _searchController,
-                        onSearchSubmitted: _onSearchSubmitted, 
-                        cartCount: cartViewModel.itemCount,
-                        onCartPressed: () {
-                          Navigator.pushNamed(context, '/cartPage');
-                        },
-                      );
-                    },
-                  ),
-                )
-              : null,
-      body: _getPage(_selectedIndex),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _selectedIndex,
-        userType: userType,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-      ),
-    );
-  }
+      return Scaffold(
+        drawer: HamburgerMenu(
+          userType: userType,
+          onLogout: () {
+            Navigator.pushReplacementNamed(context, '/login');
+          },
+        ),
+        backgroundColor: AppColors.base,
+        appBar: _selectedIndex == 0
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(kToolbarHeight),
+                child: Consumer<CartViewModel>(
+                  builder: (context, cartViewModel, _) {
+                    print('CartViewModel itemCount: ${cartViewModel.itemCount}');
+                    return TopNavBar(
+                      searchController: _searchController,
+                      onSearchSubmitted: _onSearchSubmitted,
+                      cartCount: cartViewModel.itemCount,
+                      chatCount: unreadChatCount,  // <-- Dynamic unread count here
+                      onCartPressed: () {
+                        Navigator.pushNamed(context, '/cartPage');
+                      },
+                    );
+                  },
+                ),
+              )
+            : null,
+        body: _getPage(_selectedIndex),
+        bottomNavigationBar: BottomNavBar(
+          currentIndex: _selectedIndex,
+          userType: userType,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+        ),
+      );
+    },
+  );
+}
+
 
   Widget _getPage(int index) {
     switch (index) {

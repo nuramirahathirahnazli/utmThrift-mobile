@@ -17,7 +17,6 @@ class CartViewModel with ChangeNotifier {
     return _items.length;
   }
 
-  
   int get totalQuantity {
     return _items.values.fold(0, (sum, item) => sum + item.quantity);
   }

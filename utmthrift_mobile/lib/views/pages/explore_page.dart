@@ -30,6 +30,7 @@ class _ExplorePageState extends State<ExplorePage> {
   DateTime? _lastFavoriteTap;
 
   int? _userId;
+  final int _chatCount = 3; // Replace with dynamic data later
 
   final List<String> _categories = [
     "Women Clothes", "Books & Notes", "Electronics", "Beauty & Health",
@@ -247,7 +248,8 @@ class _ExplorePageState extends State<ExplorePage> {
       appBar: TopNavBar(
         searchController: _searchController,
         onSearchSubmitted: (_) => _loadItems(),
-        cartCount: cartViewModel.totalQuantity,
+        cartCount: cartViewModel.itemCount,
+        chatCount: _chatCount,
         onCartPressed: () {
           Navigator.pushNamed(context, '/cartPage'); // or your cart route
         },

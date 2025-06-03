@@ -1,10 +1,21 @@
-// ignore_for_file: library_private_types_in_public_api, prefer_final_fields, unused_import, avoid_print
+// ignore_for_file: library_private_types_in_public_api, prefer_final_fields, unused_import, avoid_print, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+// Services
+import 'package:utmthrift_mobile/services/chat_service.dart';
+import 'package:utmthrift_mobile/services/item_service.dart';
+
+// ViewModels
+import 'package:utmthrift_mobile/viewmodels/chatmessage_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/signin_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/user_viewmodel.dart';
+
+// Views
 import 'package:utmthrift_mobile/views/events/all_events_page.dart';
 import 'package:utmthrift_mobile/views/events/event_details_page.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
@@ -22,7 +33,10 @@ import 'package:utmthrift_mobile/views/shared/hamburger_menu.dart';
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 
 class SellerHomeScreen extends StatefulWidget {
-  const SellerHomeScreen({super.key});
+  
+  const SellerHomeScreen({
+    super.key,
+  });
 
   @override
   _SellerHomeScreenState createState() => _SellerHomeScreenState();
@@ -31,17 +45,44 @@ class SellerHomeScreen extends StatefulWidget {
 class _SellerHomeScreenState extends State<SellerHomeScreen> {
   int _selectedIndex = 0;
   final String userType = 'Seller';
-
-  // Add this controller
   final TextEditingController _searchController = TextEditingController();
 
   // Handle search submitted action
   void _onSearchSubmitted(String value) {
-    // You can handle search here, e.g. navigate or filter items
     print('Search submitted: $value');
   }
 
-   @override
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final userVM = Provider.of<UserViewModel>(context, listen: false);
+      await userVM.loadUser(); // Make sure user is loaded
+
+      final chatVM = Provider.of<ChatMessageViewModel>(context, listen: false);
+        chatVM.initialize(currentUserId: userVM.userId);// Pass current user ID here
+
+        if (chatVM.currentUserId != null) {
+          await chatVM.fetchUnreadMessagesForSeller();
+
+          // **Fetch unread count from API for the badge**
+          await chatVM.fetchUnreadMessageCount();
+        } else {
+          print('Error: currentUserId is null in SellerHomeScreen initState');
+        }
+    });
+    
+    Future.microtask(() {
+        final eventVM = context.read<EventViewModel>();
+        final itemVM = context.read<ItemViewModel>();
+
+        eventVM.getLatestEvents();
+        itemVM.getLatestItems();
+      }
+    );
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -50,8 +91,10 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final cartViewModel = Provider.of<CartViewModel>(context);
-
+    final chatVM = context.watch<ChatMessageViewModel>();
+    
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       drawer: HamburgerMenu(
         userType: 'Seller', // or pass dynamically
         onLogout: () {
@@ -59,13 +102,16 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
         },
       ),
       backgroundColor: AppColors.base,
-      appBar: _selectedIndex == 0 ? TopNavBar(
+      appBar: _selectedIndex == 0 
+      ? TopNavBar(
         searchController: _searchController,
         onSearchSubmitted: _onSearchSubmitted,
         cartCount: cartViewModel.totalQuantity,
+        chatCount: chatVM.unreadCount, 
         onCartPressed: () {
           Navigator.pushNamed(context, '/cartPage'); // or your cart route
         },
+        
       ) : null,
       body: _getPage(_selectedIndex),
       bottomNavigationBar: BottomNavBar(
@@ -84,7 +130,15 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
   Widget _getPage(int index) {
     switch (index) {
       case 0:
-        return const HomeScreenContent(); 
+        return HomeScreenContent(
+          favoriteItemIds: const <int>{}, // or pass from a ViewModel if available
+          itemService: ItemService(), // or reuse a shared instance
+          onFavoriteToggle: (int itemId) {
+            // Add your favorite toggle logic here
+            print("Favorite toggled for item: $itemId");
+          },
+        );
+
       case 1:
         return const Center(child: Text("Explore Page - Coming Soon"));
       case 2:
@@ -94,13 +148,20 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
       case 4:
         return ProfilePage(userType: userType,);
       default:
-        return const HomeScreenContent();
+        return HomeScreenContent(
+          favoriteItemIds: const <int>{}, // or pass from a ViewModel if available
+          itemService: ItemService(), // or reuse a shared instance
+          onFavoriteToggle: (int itemId) {
+            // Add your favorite toggle logic here
+            print("Favorite toggled for item: $itemId");
+          },
+        );
     }
   }
 }
 
 class HomeScreenContent extends StatefulWidget {
-  const HomeScreenContent({super.key});
+  const HomeScreenContent({super.key, required Set<int> favoriteItemIds, int? userId, required ItemService itemService, required void Function(int itemId) onFavoriteToggle});
 
   @override
   _HomeScreenContentState createState() => _HomeScreenContentState();

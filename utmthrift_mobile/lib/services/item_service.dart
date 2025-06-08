@@ -40,6 +40,102 @@ class ItemService {
     }
   }
 
+  // Fetch all items without any filters
+  Future<List<Item>> fetchAllItems() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/items'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> body = json.decode(response.body);
+      List<dynamic> itemsList = body.containsKey('data') ? body['data'] : body['items'];
+      return itemsList.map((e) => Item.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load all items');
+    }
+  }
+
+  //Fetch latest 20 items for user homescreen purpose
+  static Future<List<Item>> fetchLatestItems({int limit = 20}) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/items?limit=$limit'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> body = json.decode(response.body);
+
+      if (body.containsKey('data')) {
+        List<dynamic> itemsList = body['data'];
+        return itemsList.map((e) => Item.fromJson(e)).toList();
+      } else {
+        throw Exception("Invalid response format: Missing 'items' key.");
+      }
+    } else {
+      throw Exception('Failed to load latest items');
+    }
+  }
+
+  //For explore page
+  Future<List<Item>> fetchFilteredItems({
+    String? search,
+    int? categoryId,
+    double? minPrice,
+    double? maxPrice,
+    String? condition,
+  }) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final Map<String, String> queryParams = {};
+    if (search != null) queryParams['search'] = search;
+    if (categoryId != null) queryParams['category_id'] = categoryId.toString();
+    if (minPrice != null) queryParams['min_price'] = minPrice.toString();
+    if (maxPrice != null) queryParams['max_price'] = maxPrice.toString();
+    if (condition != null) queryParams['condition'] = condition;
+
+    final uri = Uri.parse('$baseUrl/items').replace(queryParameters: queryParams);
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> body = json.decode(response.body);
+      if (body.containsKey('data')) {
+        List<dynamic> itemsList = body['data'];
+        return itemsList.map((e) => Item.fromJson(e)).toList();
+      } else {
+        throw Exception("Missing 'data' in response.");
+      }
+    } else {
+      throw Exception('Failed to load items');
+    }
+  }
+
   // Fetch item details by item ID
   Future<Map<String, dynamic>> fetchItemDetails(int id) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -49,7 +145,7 @@ class ItemService {
     if (token == null) throw Exception("User is not authenticated");
 
     final response = await http.get(
-      Uri.parse('$baseUrl/items/$id'),
+      Uri.parse('$baseUrl/buyer/items/$id'),
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer $token',
@@ -60,15 +156,115 @@ class ItemService {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         final item = data['item'];
+
+        //Handle images
         final List<dynamic> imagesDynamic = item['images'] ?? [];
         final List<String> images = imagesDynamic.map((e) => e.toString()).toList();
         item['images'] = images;
+        
         return item;
       } else {
         throw Exception('Failed to fetch item: ${data['message']}');
       }
     } else {
       throw Exception('Failed to load item');
+    }
+  }
+
+  // Fetch favorite items for a user. 
+  // But this only fetch ids, not all the data of that item
+  Future<Set<int>> fetchFavoriteItemIds(int userId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      print("Token: $token");
+
+      if (token == null) throw Exception("User is not authenticated");
+
+      print('Fetching favorites for userId: $userId');
+      final response = await http.get(Uri.parse('$baseUrl/item/favourites'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      
+      print('GET response status: ${response.statusCode}');
+      print('GET response body: ${response.body}');
+      
+
+      if (response.statusCode == 200) {
+      final List<dynamic> favorites = jsonDecode(response.body);
+      // Explicitly cast to Set<int>
+      return favorites.map<int>((fav) => fav['id'] as int).toSet();
+    }
+    return <int>{}; // Return empty Set<int>
+  } catch (e) {
+    print('Error fetching favorites: $e');
+    return <int>{}; // Return empty Set<int>
+  }
+}
+
+  // Add favorite item for a user
+  Future<bool> addFavorite(int userId, int itemId) async {
+    
+    print('Toggling favorite for userId: $userId, itemId: $itemId');
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print("Token: $token");
+
+    if (token == null) throw Exception("User is not authenticated");
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/item/$itemId/toggle-favourite'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      }
+    );  
+
+    print('POST response status: ${response.statusCode}');
+    print('POST response body: ${response.body}');
+
+    return response.statusCode == 201;
+  }
+
+  // Remove favorite item for a user
+  Future<bool> removeFavorite(int userId, int itemId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/favorites/remove'),
+      body: {
+        'user_id': userId.toString(),
+        'item_id': itemId.toString(),
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
+  // Fetch favourited items for a user with full details of items
+  Future<List<Item>> fetchAllFavouritedItems(List<int> ids) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print("Token  : $token");
+
+    if (token == null) throw Exception("User is not authenticated");
+    if (ids.isEmpty) return [];
+
+    final String idsParam = ids.join(',');
+    final response = await http.get(
+      Uri.parse('$baseUrl/items/all-favourited?ids=$idsParam'),
+      headers: {
+        'Authorization': 'Bearer $token',  // Add this header to authenticate
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => Item.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to fetch items by IDs');
     }
   }
 

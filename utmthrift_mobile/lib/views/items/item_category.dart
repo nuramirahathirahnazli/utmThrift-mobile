@@ -1,4 +1,4 @@
-// ignore_for_file: use_super_parameters
+// ignore_for_file: use_super_parameters, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
@@ -68,7 +68,13 @@ class CategoryItemsScreen extends StatelessWidget {
                     name: items[index]["name"],
                     price: items[index]["price"],
                     seller: items[index]["seller"],
-                    condition: items[index]["condition"],
+                    condition: items[index]["condition"], 
+                    itemId: index,
+                    isFavorite: false, // placeholder, update with actual logic if needed
+                    onFavoriteToggle: () {
+                      // placeholder function, update with favorite toggle logic
+                      print("Toggled favorite for item ${items[index]["name"]}");
+                    },
                   );
                 },
               ),

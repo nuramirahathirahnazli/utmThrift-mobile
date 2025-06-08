@@ -10,7 +10,7 @@ class Item {
   final String condition;
   final List<String> imageUrls;
   final String category; // now storing category name, not ID
-
+  final String? seller; 
   Item({
     required this.id,
     required this.name,
@@ -19,10 +19,12 @@ class Item {
     required this.condition,
     required this.imageUrls,
     required this.category,
+    required this.seller,
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
     print('DEBUG parsing item: $json');
+
     final imagesData = json['image']; 
     print('DEBUG imagesData type: ${imagesData.runtimeType}, value: $imagesData');
     
@@ -48,14 +50,18 @@ class Item {
       categoryName = json['category']['name'] ?? 'Unknown';
     }
 
+    // Extract seller name - UPDATED to match backend response
+    String sellerName = json['seller_name'] ?? 'Unknown'; // Direct field access
+
     return Item(
       id: json['id'] as int,
       name: json['name'] as String,
       description: json['description'] as String,
       price: double.tryParse(json['price'].toString()) ?? 0.0,
-      condition: json['condition'] as String,
+       condition: json['condition'] ?? '',
       imageUrls: images,
       category: categoryName,
+      seller: sellerName,
     );
   }
 

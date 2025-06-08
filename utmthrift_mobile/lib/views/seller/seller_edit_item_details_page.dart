@@ -1,4 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api, avoid_print
+// ignore_for_file: library_private_types_in_public_api, avoid_print, unnecessary_nullable_for_final_variable_declarations
 
 import 'dart:io';
 import 'package:flutter/material.dart';

@@ -10,9 +10,11 @@ import 'package:utmthrift_mobile/models/item_model.dart';
 
 class ItemViewModel extends ChangeNotifier {
   final ItemService _itemService = ItemService();
-
+  
   List<dynamic> categories = [];
   List<Item> sellerItems = [];
+  List<Item> latestItems = [];
+
   bool isLoading = false;
   String errorMessage = '';
 
@@ -30,7 +32,12 @@ class ItemViewModel extends ChangeNotifier {
   void updateImages(List<String> newImages) {
     images = newImages;
   }
-  
+
+  Set<int> favoritedItemIds = {};
+  bool isItemFavorited(int itemId) {
+    return favoritedItemIds.contains(itemId);
+  }
+
   /// Fetch all item categories from API
   Future<void> fetchCategories() async {
     isLoading = true;
@@ -49,6 +56,22 @@ class ItemViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Fetch latest items from API
+  Future<void> getLatestItems({int limit = 20}) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      latestItems = await ItemService.fetchLatestItems(limit: limit);
+    } catch (e) {
+      print('Error loading items: $e');
+      latestItems = [];
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+  
   /// Fetch single item details using item ID
   Future<Map<String, dynamic>?> fetchItemDetails(int id) async {
     isLoading = true;
@@ -66,6 +89,49 @@ class ItemViewModel extends ChangeNotifier {
     notifyListeners();
     return itemDetails; 
   }
+
+  /// Fetch favorite items for the current user
+  Future<void> fetchFavoriteItems() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('user_id');
+      if (userId == null) throw Exception("User ID not found.");
+
+      Set favorites = await _itemService.fetchFavoriteItemIds(userId);
+      favoritedItemIds = favorites.cast<int>().toSet();
+
+      notifyListeners();
+    } catch (e) {
+      print("Error fetching favorites: $e");
+    }
+  }
+
+
+  /// Toggle favorite status for an item
+  Future<void> toggleFavorite(int itemId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id');
+    if (userId == null) return;
+
+    bool success = false;
+
+    if (favoritedItemIds.contains(itemId)) {
+      // Item already favorited, so remove it
+      success = await _itemService.removeFavorite(userId, itemId);
+      if (success) {
+        favoritedItemIds.remove(itemId);
+      }
+    } else {
+      // Item not favorited, so add it
+      success = await _itemService.addFavorite(userId, itemId);
+      if (success) {
+        favoritedItemIds.add(itemId);
+      }
+    }
+
+    notifyListeners();
+  }
+
 
 
   /// Add a new item

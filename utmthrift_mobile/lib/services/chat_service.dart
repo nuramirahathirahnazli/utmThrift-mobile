@@ -22,7 +22,7 @@ class ChatService {
     };
   }
   
-  // Get chat messages between current user and seller (or by item)
+  // Get chat messages between current user and seller
   Future<List<ChatMessage>> fetchMessages({
     required int currentUserId,
     required int sellerId,
@@ -52,35 +52,63 @@ class ChatService {
 
   // Send a message
   Future<ChatMessage> sendMessage({
-    required int currentUserId,
-    required int sellerId,
-    required int itemId,
-    required String message,
-  }) async {
+  required int currentUserId,
+  required int sellerId,
+  int? itemId,  // <-- make this nullable here
+  required String message,
+}) async {
+  final token = await _getToken();
+  if (token == null) throw Exception('No authentication token found');
+
+  final Map<String, dynamic> bodyMap = {
+    'receiver_id': sellerId,
+    'message': message,
+  };
+
+  // Only add item_id if it's not null and greater than 0
+  if (itemId != null && itemId > 0) {
+    bodyMap['item_id'] = itemId;
+  }
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/messages'),
+    headers: _buildHeaders(token),
+    body: jsonEncode(bodyMap),
+  );
+
+  final data = jsonDecode(response.body);
+  print('Cart API response data: $data');
+
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    return ChatMessage.fromJson(data);
+  } else {
+    throw Exception('Failed to send message');
+  }
+}
+
+
+  // Fetch messages for buyer
+  Future<List<ChatMessage>> fetchMessagesForBuyer(int buyerId) async {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/messages'),
+    final response = await http.get(
+      Uri.parse('$baseUrl/buyer/messages/$buyerId'),
       headers: _buildHeaders(token),
-      body: jsonEncode({
-            'receiver_id': sellerId,
-            'item_id': itemId,
-            'message': message,
-      }),
     );
 
-    final data = jsonDecode(response.body);
-    print('Cart API response data: $data');
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return ChatMessage.fromJson(jsonDecode(response.body));
+    print('fetchMessagesForBuyer status code: ${response.statusCode}');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      print('Number of messages for buyer $buyerId: ${data.length}');
+      return data.map((item) => ChatMessage.fromJson(item)).toList();
     } else {
-      throw Exception('Failed to send message');
+      print('Failed to load messages for buyer $buyerId. Body: ${response.body}');
+      throw Exception('Failed to load messages');
     }
   }
-
-  // Fetch messages for a specific seller
+  
+  // Fetch messages for seller
   Future<List<ChatMessage>> fetchMessagesForSeller(int sellerId) async {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
@@ -101,7 +129,7 @@ class ChatService {
     }
   }
 
-  Future<int> fetchUnreadMessageCount(String token) async {
+  Future<int> fetchUnreadMessageCount() async {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
 
@@ -117,7 +145,7 @@ class ChatService {
       throw Exception('Failed to fetch unread count');
     }
   }
-  
+
   Future<List<ChatPartner>> fetchChatList() async {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
@@ -149,11 +177,14 @@ class ChatService {
 
     final url = Uri.parse('$baseUrl/messages/mark-as-read');
 
-    final body = jsonEncode({
-      'userId': chatPartnerId, // pass partner's ID here
+    final bodyMap = {
+      'userId': chatPartnerId,
       'userType': userType,
-      'itemId': itemId,
-    });
+    };
+    if (itemId != null) {
+      bodyMap['item_id'] = itemId;
+    }
+    final body = jsonEncode(bodyMap);
 
     final response = await http.post(
       url,

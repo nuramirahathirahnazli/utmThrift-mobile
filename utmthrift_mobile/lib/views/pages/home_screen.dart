@@ -1,4 +1,6 @@
-// ignore_for_file: avoid_print, use_build_context_synchronously, library_private_types_in_public_api
+
+
+// ignore_for_file: library_private_types_in_public_api, avoid_print, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +13,7 @@ import 'package:utmthrift_mobile/viewmodels/chatmessage_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/event_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/user_viewmodel.dart';
 
 import 'package:utmthrift_mobile/views/events/all_events_page.dart';
 import 'package:utmthrift_mobile/views/events/event_details_page.dart';
@@ -94,6 +97,23 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _initUserAndData();
 
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final userVM = Provider.of<UserViewModel>(context, listen: false);
+      await userVM.loadUser(); // Make sure user is loaded
+
+      final chatVM = Provider.of<ChatMessageViewModel>(context, listen: false);
+        chatVM.initialize(currentUserId: userVM.userId);// Pass current user ID here
+
+        if (chatVM.currentUserId != null) {
+          await chatVM.fetchUnreadMessagesForSeller();
+
+          // **Fetch unread count from API for the badge**
+          await chatVM.fetchUnreadMessageCount();
+        } else {
+          print('Error: currentUserId is null in SellerHomeScreen initState');
+        }
+    });
+    
     // Load cart data once
     Future.microtask(() async {
       final cartViewModel = Provider.of<CartViewModel>(context, listen: false);
@@ -157,9 +177,8 @@ class _HomeScreenState extends State<HomeScreen> {
 Widget build(BuildContext context) {
   return Consumer<ChatMessageViewModel>(
     builder: (context, chatVM, child) {
-      final unreadChatCount = chatVM.unreadMessageCount;
-
       return Scaffold(
+        resizeToAvoidBottomInset: false,
         drawer: HamburgerMenu(
           userType: userType,
           onLogout: () {
@@ -170,14 +189,13 @@ Widget build(BuildContext context) {
         appBar: _selectedIndex == 0
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(kToolbarHeight),
-                child: Consumer<CartViewModel>(
-                  builder: (context, cartViewModel, _) {
-                    print('CartViewModel itemCount: ${cartViewModel.itemCount}');
+                child: Consumer2<CartViewModel, ChatMessageViewModel>(
+                  builder: (context, cartViewModel, chatViewModel, _) {
                     return TopNavBar(
                       searchController: _searchController,
                       onSearchSubmitted: _onSearchSubmitted,
                       cartCount: cartViewModel.itemCount,
-                      chatCount: unreadChatCount,  // <-- Dynamic unread count here
+                      chatCount: chatVM.unreadCount, 
                       onCartPressed: () {
                         Navigator.pushNamed(context, '/cartPage');
                       },

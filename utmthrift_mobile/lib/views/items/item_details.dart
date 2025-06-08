@@ -231,6 +231,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                             itemId: snapshot.data!['id'],
                             itemName: snapshot.data!['name'],
                             sellerName: sellerName,
+                            initialMessage: "Hi, I want to ask regarding '${snapshot.data!['name']}'",
                           ),
                         ),
                       );

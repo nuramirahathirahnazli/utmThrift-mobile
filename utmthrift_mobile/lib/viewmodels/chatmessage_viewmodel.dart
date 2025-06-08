@@ -62,9 +62,29 @@ class ChatMessageViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> fetchUnreadMessagesForBuyer() async {
+    if (currentUserId == null) {
+      print('Error: currentUserId is null');
+      return;
+    }
 
-// NOTE: Currently used in seller home page to show unread chat previews.
-// Consider refactoring later to unify fetch logic.
+    print('Fetching unread messages for buyer with currentUserId=$currentUserId...');
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _messages = await _chatService.fetchMessagesForBuyer(currentUserId!);
+      print('Fetched ${_messages.length} messages for buyer');
+      print('Unread message count after fetch: $unreadMessageCount');
+    } catch (e) {
+      _messages = [];
+      print('Error fetching unread messages for buyer: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
   Future<void> fetchUnreadMessagesForSeller() async {
     if (currentUserId == null) {
       print('Error: currentUserId is null');
@@ -118,6 +138,7 @@ class ChatMessageViewModel extends ChangeNotifier {
   }
 
   Future<void> markMessagesAsRead({
+    
     required int chatPartnerId,  // other user's ID, NOT the current user
     required String userType,    // 'buyer' or 'seller'
     int? itemId,
@@ -135,12 +156,15 @@ class ChatMessageViewModel extends ChangeNotifier {
       }
     }
 
+    // Refresh unread count from API
+    await fetchUnreadMessageCount();
+    
     notifyListeners();
   }
 
   Future<void> fetchUnreadMessageCount() async {
     try {
-      _unreadCount = await _chatService.fetchUnreadMessageCount("token");
+      _unreadCount = await _chatService.fetchUnreadMessageCount();
       print("Unread count fetched from API: $_unreadCount");
       notifyListeners();
     } catch (e) {

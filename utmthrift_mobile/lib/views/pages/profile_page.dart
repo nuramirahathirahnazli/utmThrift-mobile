@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:utmthrift_mobile/views/order/order_history_page.dart';
 import 'package:utmthrift_mobile/views/profile/profile_edit.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 import 'package:utmthrift_mobile/services/auth_service.dart';
@@ -60,7 +61,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
               _buildMenuOption(Icons.lock, "Password", () {}),
               _buildMenuOption(Icons.favorite, "Liked", () {}),
-              _buildMenuOption(Icons.shopping_cart, "My Purchases", () {}),
+              _buildMenuOption(Icons.shopping_cart, "My Purchases", () {
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => const OrderHistoryPage()),
+                );
+              }),
               const SizedBox(height: 20),
               const Text("More Information", 
                 style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),

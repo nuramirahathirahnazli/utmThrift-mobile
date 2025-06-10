@@ -52,39 +52,41 @@ class ChatService {
 
   // Send a message
   Future<ChatMessage> sendMessage({
-  required int currentUserId,
-  required int sellerId,
-  int? itemId,  // <-- make this nullable here
-  required String message,
-}) async {
-  final token = await _getToken();
-  if (token == null) throw Exception('No authentication token found');
+    required int loggedInUserId,  // user who is logged in and sending
+    required int chatPartnerId,   // user you are chatting with
+    int? itemId,  
+    required String message,
+  }) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No authentication token found');
 
-  final Map<String, dynamic> bodyMap = {
-    'receiver_id': sellerId,
-    'message': message,
-  };
+    final Map<String, dynamic> bodyMap = {
+      'sender_id': loggedInUserId,
+      'receiver_id': chatPartnerId,
+      'message': message,
+    };
 
-  // Only add item_id if it's not null and greater than 0
-  if (itemId != null && itemId > 0) {
-    bodyMap['item_id'] = itemId;
+    // Only add item_id if it's not null and greater than 0
+    if (itemId != null && itemId > 0) {
+      bodyMap['item_id'] = itemId;
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/messages'),
+      headers: _buildHeaders(token),
+      body: jsonEncode(bodyMap),
+    );
+
+    final data = jsonDecode(response.body);
+    print('Chat API response data: $data');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return ChatMessage.fromJson(data);
+    } else {
+      print('Error ${response.statusCode}: ${response.body}');
+      throw Exception('Failed to send message');
+    }
   }
-
-  final response = await http.post(
-    Uri.parse('$baseUrl/messages'),
-    headers: _buildHeaders(token),
-    body: jsonEncode(bodyMap),
-  );
-
-  final data = jsonDecode(response.body);
-  print('Cart API response data: $data');
-
-  if (response.statusCode == 200 || response.statusCode == 201) {
-    return ChatMessage.fromJson(data);
-  } else {
-    throw Exception('Failed to send message');
-  }
-}
 
 
   // Fetch messages for buyer
@@ -129,6 +131,7 @@ class ChatService {
     }
   }
 
+  // Fetch unread message count
   Future<int> fetchUnreadMessageCount() async {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
@@ -146,6 +149,7 @@ class ChatService {
     }
   }
 
+  // Fetch chat list
   Future<List<ChatPartner>> fetchChatList() async {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
@@ -165,6 +169,7 @@ class ChatService {
     }
   }
 
+  // Mark messages as read
   Future<void> markMessagesAsRead({
     required int chatPartnerId, // the *other* user's ID in the chat
     required String userType,   // 'buyer' or 'seller'
@@ -197,6 +202,21 @@ class ChatService {
     } else {
       print('Failed to mark messages as read: ${response.body}');
       throw Exception('Failed to mark messages as read');
+    }
+  }
+
+  // Mark an item as sold
+  Future<void> markItemAsSold(int itemId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No authentication token found');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/item/$itemId/mark-sold'),
+      headers: _buildHeaders(token),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to mark as sold');
     }
   }
 

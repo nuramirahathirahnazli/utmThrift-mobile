@@ -84,4 +84,23 @@ class CartService {
 
     return response.statusCode == 200;
   }
+
+  /// Remove item from cart by item ID
+  Future<bool> removeItemFromCart(int itemId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No authentication token found');
+
+    final response = await http.delete(
+      Uri.parse('$baseUrl/cart/remove/$itemId'),
+      headers: _buildHeaders(token),
+    );
+
+    if (response.statusCode == 200) {
+      // Successfully removed
+      return true;
+    } else {
+      print('Failed to remove item from cart: ${response.statusCode} ${response.body}');
+      return false;
+    }
+  }
 }

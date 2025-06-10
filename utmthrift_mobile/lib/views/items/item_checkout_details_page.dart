@@ -5,6 +5,7 @@ import 'package:utmthrift_mobile/models/itemcart_model.dart';
 import 'package:utmthrift_mobile/services/user_service.dart';
 import 'package:utmthrift_mobile/services/auth_service.dart';
 import 'package:utmthrift_mobile/models/user_model.dart';
+import 'package:utmthrift_mobile/views/payment/meet_with_seller_page.dart';
 
 class CheckoutDetailsPage extends StatefulWidget {
   final CartItem item;
@@ -105,8 +106,25 @@ class _CheckoutDetailsPageState extends State<CheckoutDetailsPage> {
                   /// ============ PLACE ORDER BUTTON ============
                   ElevatedButton(
                     onPressed: () {
-                      // Implement place order logic here
                       print("Placing order with payment method: $_selectedPayment");
+                      print("DEBUG >> sellerId: ${widget.item.sellerId}, sellerName: ${widget.item.sellerName}, currentUserId: ${_user!.id}");
+
+                      if (_selectedPayment == "Meet with Seller") {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MeetWithSellerPage(
+                              sellerId: widget.item.sellerId,  
+                              sellerName: widget.item.sellerName,
+                              currentUserId: _user!.id, 
+                              itemId: widget.item.itemId,
+
+                            ),
+                          ),
+                        );
+                      } else {
+                        // Handle other payment options like QR Code / Online Banking
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

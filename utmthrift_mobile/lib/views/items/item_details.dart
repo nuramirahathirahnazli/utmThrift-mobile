@@ -66,6 +66,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               : [],
           category: itemData['category']?['name'] ?? '',
           seller: itemData['seller']?['name'] ?? '',
+          sellerId: itemData['seller']?['id'],
         ),
         quantity: 1,
       );
@@ -274,6 +275,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                           : [],
                       category: snapshot.data!['category']?['name'] ?? '',
                       seller: snapshot.data!['seller']?['name'] ?? '',
+                      sellerId: snapshot.data!['seller']?['id'],
                     );
 
                     final isInCart = cartViewModel.isItemInCart(item);

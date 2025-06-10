@@ -16,6 +16,9 @@ class ChatMessageViewModel extends ChangeNotifier {
   int? currentUserId;
   int? sellerId;
   int? itemId;
+  String? paymentMethod;
+
+  DateTime? _lastAutoReplyTime;
 
   // To hold unread messages count from API
   int _unreadCount = 0;
@@ -29,20 +32,19 @@ class ChatMessageViewModel extends ChangeNotifier {
     int? currentUserId,
     int? sellerId,
     int? itemId,
+    String? paymentMethod,
   }) {
     this.currentUserId = currentUserId;
     this.sellerId = sellerId;
     this.itemId = itemId;
-    print('Initialized ViewModel with currentUserId=$currentUserId, sellerId=$sellerId, itemId=$itemId');
+    this.paymentMethod = paymentMethod;
+    print('Initialized ViewModel with currentUserId=$currentUserId, sellerId=$sellerId, itemId=$itemId, paymentMethod=$paymentMethod');
   }
 
+  
   Future<void> loadMessages() async {
-    if (currentUserId == null || sellerId == null || itemId == null) {
-      print('Error: currentUserId, sellerId, or itemId is null');
-      return;
-    }
+    if (currentUserId == null || sellerId == null) return;
 
-    print('Loading messages between user $currentUserId and seller $sellerId for item $itemId...');
     _isLoading = true;
     notifyListeners();
 
@@ -54,14 +56,14 @@ class ChatMessageViewModel extends ChangeNotifier {
       );
       print('Loaded ${_messages.length} messages');
     } catch (e) {
+      print('Message load error: $e');
       _messages = [];
-      print('Error loading messages: $e');
     }
 
     _isLoading = false;
     notifyListeners();
   }
-
+  
   Future<void> fetchUnreadMessagesForBuyer() async {
     if (currentUserId == null) {
       print('Error: currentUserId is null');
@@ -110,37 +112,63 @@ class ChatMessageViewModel extends ChangeNotifier {
 
   Future<void> sendMessage(String message) async {
     if (message.trim().isEmpty) {
-      print('sendMessage called with empty message, ignoring');
+      print('Ignoring empty message');
       return;
     }
 
-    if (currentUserId == null || sellerId == null || itemId == null) {
-      print('Error: currentUserId, sellerId, or itemId is null');
+    if (currentUserId == null || sellerId == null) {
+      print('Error: Missing required IDs');
       return;
     }
 
-    print('Sending message: "$message"');
+    print('Sending: "$message"');
     try {
       final newMsg = await _chatService.sendMessage(
-        currentUserId: currentUserId!,
-        sellerId: sellerId!,
-        itemId: itemId!,
+        loggedInUserId: currentUserId!,
+        chatPartnerId: sellerId!,
+        itemId: itemId,
         message: message,
       );
+      
       _messages.add(newMsg);
-      print('Message sent and added to list. Total messages: ${_messages.length}');
-      print('Unread message count after send: $unreadMessageCount');
       notifyListeners();
+      _triggerAutoReply(message);
     } catch (e) {
-      print('Error sending message: $e');
+      print('Message send error: $e');
       rethrow;
     }
   }
 
-  Future<void> markMessagesAsRead({
+  void _triggerAutoReply(String userMessage) {
+    const autoReplyText = "Hello! Thanks for your message. Let's arrange the meeting. State your preferred meeting place and date.";
+    final meetKeywords = ['meet', 'payment', 'arrange', 'handover', 'deliver'];
     
-    required int chatPartnerId,  // other user's ID, NOT the current user
-    required String userType,    // 'buyer' or 'seller'
+    final shouldReply = 
+        // Check payment method
+        (paymentMethod?.toLowerCase().contains("meet") ?? false) ||
+        // Or message contains keywords
+        meetKeywords.any((word) => userMessage.toLowerCase().contains(word));
+    
+    final canReply = 
+        !hasAutoReplyBeenSent(autoReplyText) &&
+        (_lastAutoReplyTime == null || 
+         DateTime.now().difference(_lastAutoReplyTime!) > const Duration(minutes: 5));
+
+    if (shouldReply && canReply) {
+      print('Triggering auto-reply...');
+      _lastAutoReplyTime = DateTime.now();
+      sendAutoReplyFromSeller(autoReplyText);
+    }
+  }
+  
+  bool isInquiryMessage(String msg) {
+  final inquiryKeywords = ['price', 'available', 'condition', 'details'];
+  return inquiryKeywords.any((word) => msg.toLowerCase().contains(word));
+}
+
+  Future<void> markMessagesAsRead({
+    required int chatPartnerId,
+    required String userType,
     int? itemId,
   }) async {
     await _chatService.markMessagesAsRead(
@@ -149,19 +177,15 @@ class ChatMessageViewModel extends ChangeNotifier {
       itemId: itemId,
     );
 
-    // Update local message list to mark them as read
-    for (var msg in _messages) {
-      if (!msg.isRead) {
-        msg.isRead = true;
-      }
+    // Update local messages
+    for (var msg in _messages.where((m) => !m.isRead && m.senderId == chatPartnerId)) {
+      msg.isRead = true;
     }
-
-    // Refresh unread count from API
-    await fetchUnreadMessageCount();
     
+    await fetchUnreadMessageCount();
     notifyListeners();
   }
-
+  
   Future<void> fetchUnreadMessageCount() async {
     try {
       _unreadCount = await _chatService.fetchUnreadMessageCount();
@@ -169,6 +193,58 @@ class ChatMessageViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       print("Failed to fetch unread count: $e");
+    }
+  }
+
+  Future<void> sendAutoReplyFromSeller(String message) async {
+    if (sellerId == null || currentUserId == null) return;
+    
+    try {
+      final reply = await _chatService.sendMessage(
+        loggedInUserId: sellerId!,
+        chatPartnerId: currentUserId!,
+        itemId: itemId,
+        message: message,
+      );
+      
+      _messages.add(reply);
+      notifyListeners();
+    } catch (e) {
+      print('Auto-reply failed: $e');
+    }
+  }
+
+  bool hasAutoReplyBeenSent(String autoReplyText) {
+    return messages.any((msg) =>
+      msg.senderId == sellerId && // From seller
+      msg.message.toLowerCase().contains("thanks for your message") // Partial match
+    );
+  }
+
+  // track if meeting place has been confirmed
+   bool hasMeetingPlaceBeenStated() {
+    return _messages.any((msg) =>
+      msg.senderId == currentUserId &&
+      msg.message.toLowerCase().contains("meet at"));
+  }
+
+  bool hasConfirmedMeetPlace = false;
+
+  Future<void> confirmMeetingPlace() async {
+    await sendMessage("Meeting place confirmed. Looking forward to meet!");
+    hasConfirmedMeetPlace = true;
+    notifyListeners();
+  }
+  
+  bool isItemMarkedSold = false;
+
+  Future<void> markItemAsSold(int itemId) async {
+    try {
+      await _chatService.markItemAsSold(itemId);
+      isItemMarkedSold = true;
+      notifyListeners();
+    } catch (e) {
+      print("Mark as sold error: $e");
     }
   }
 

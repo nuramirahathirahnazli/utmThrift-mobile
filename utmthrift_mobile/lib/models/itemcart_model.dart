@@ -5,6 +5,9 @@ class CartItem {
   final double price;
   final List<String> imageUrl;
   late final int quantity;
+  final int sellerId;
+  final String sellerName;
+
 
   CartItem({
     required this.itemId,
@@ -12,6 +15,8 @@ class CartItem {
     required this.price,
     required this.imageUrl,
     this.quantity = 1,
+    required this.sellerId,
+    required this.sellerName,
   });
 
   double get totalPrice => price * quantity;
@@ -43,11 +48,13 @@ class CartItem {
     }
 
     return CartItem(
-      itemId: json['item_id'] ?? 0,                 // <-- fix key here
+      itemId: json['item_id'] ?? 0,                 
       name: json['item_name'] ?? 'Unknown',
       price: double.tryParse(json['price'].toString()) ?? 0.0,
       quantity: json['quantity'] ?? 1,
       imageUrl: imageUrls,
+      sellerId: json['seller_id'] ?? 0,
+      sellerName: json['seller_name'] ?? 'Unknown Seller',
     );
   }
 

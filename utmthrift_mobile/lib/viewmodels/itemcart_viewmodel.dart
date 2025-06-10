@@ -65,6 +65,8 @@ class CartViewModel with ChangeNotifier {
         price: item.price,
         quantity: quantity,   
         imageUrl: item.imageUrls,
+        sellerId: item.sellerId,
+        sellerName: item.seller ?? 'Unknown Seller',
       );
     }
     notifyListeners();

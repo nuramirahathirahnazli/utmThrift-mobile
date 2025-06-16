@@ -1,12 +1,21 @@
 // ignore_for_file: use_build_context_synchronously, avoid_print
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:utmthrift_mobile/views/order/order_history_details_page.dart';
 import '../../models/order_model.dart';
 import '../../services/order_service.dart';
 
 class OrderHistoryPage extends StatefulWidget {
-  const OrderHistoryPage({super.key});
+
+  final bool refresh;
+  final Map<String, dynamic>? paymentResult;
+
+  const OrderHistoryPage({
+    super.key,
+    this.refresh = false,
+    this.paymentResult
+  });
 
   @override
   State<OrderHistoryPage> createState() => _OrderHistoryPageState();
@@ -19,6 +28,19 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   void initState() {
     super.initState();
     _ordersFuture = OrderService.getBuyerOrders();
+    _initializeOrders();
+    _handleWebAuthToken();
+   
+  }
+
+  Future<void> _handleWebAuthToken() async {
+    final uri = Uri.base;
+    final token = uri.queryParameters['token'];
+    if (token != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+      print("Token saved to prefs: $token");
+    }
   }
 
   void _confirmOrder(int orderId) async {
@@ -37,7 +59,20 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     }
   }
 
+  void _initializeOrders() {
+    // If this page was navigated to with a request to refresh
+    if (widget.refresh || widget.paymentResult != null) {
+      print('Refreshing order list due to payment result');
+      setState(() {
+        _ordersFuture = OrderService.getBuyerOrders(); // fetch latest orders
+      });
+    } else {
+      _ordersFuture = OrderService.getBuyerOrders(); // initial load
+    }
+  }
+
   Widget _buildOrderCard(Order order) {
+    print('>> OrderHistoryPage: refresh=${widget.refresh}, paymentResult=${widget.paymentResult}');
     print('DEBUG >> Order item name: ${order.item?.name}');
   return GestureDetector(
     onTap: () {

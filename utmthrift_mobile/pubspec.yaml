@@ -38,7 +38,11 @@ dependencies:
   html: ^0.15.0
   cloudinary_sdk: ^5.0.0+1
   sqflite: ^2.0.0+4
-  
+  url_launcher: ^6.1.5
+  uni_links: ^0.5.1
+  webview_flutter: ^4.8.0
+  webview_flutter_android: ^3.10.2
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6

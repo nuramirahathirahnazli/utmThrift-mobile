@@ -1,11 +1,15 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:utmthrift_mobile/models/itemcart_model.dart';
+
 import 'package:utmthrift_mobile/services/user_service.dart';
 import 'package:utmthrift_mobile/services/auth_service.dart';
+
 import 'package:utmthrift_mobile/models/user_model.dart';
+import 'package:utmthrift_mobile/models/itemcart_model.dart';
+
 import 'package:utmthrift_mobile/views/payment/meet_with_seller_page.dart';
+import 'package:utmthrift_mobile/views/payment/online_banking_confirmation_page.dart';
 
 class CheckoutDetailsPage extends StatefulWidget {
   final CartItem item;
@@ -105,7 +109,7 @@ class _CheckoutDetailsPageState extends State<CheckoutDetailsPage> {
 
                   /// ============ PLACE ORDER BUTTON ============
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       print("Placing order with payment method: $_selectedPayment");
                       print("DEBUG >> sellerId: ${widget.item.sellerId}, sellerName: ${widget.item.sellerName}, currentUserId: ${_user!.id}");
 
@@ -122,8 +126,15 @@ class _CheckoutDetailsPageState extends State<CheckoutDetailsPage> {
                             ),
                           ),
                         );
+                      } else if (_selectedPayment == "Online Banking") {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PaymentConfirmationPage(item: widget.item, user: _user!),
+                          ),
+                        );
                       } else {
-                        // Handle other payment options like QR Code / Online Banking
+                        // Handle QR Code payment or others here
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -138,3 +149,4 @@ class _CheckoutDetailsPageState extends State<CheckoutDetailsPage> {
     );
   }
 }
+

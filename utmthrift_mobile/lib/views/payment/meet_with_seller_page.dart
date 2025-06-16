@@ -155,14 +155,15 @@ class MeetWithSellerPage extends StatelessWidget {
       return;
     }
 
-    final success = await OrderService.createMeetUpOrder(
+    final success = await OrderService.createOrder(
       buyerId: currentUserId,
       itemId: itemId!,
       sellerId: sellerId,
       quantity: 1,
+      paymentMethod: 'Meet Up',
     );
 
-    if (success) {
+    if (success != null) {
       final cartService = CartService();
       await cartService.removeItemFromCart(itemId!);
 

@@ -33,7 +33,8 @@ class WelcomePage extends StatelessWidget {
                 ),
               ),
               padding: const EdgeInsets.all(20),
-              child: Column(
+              child: SingleChildScrollView(
+                child: Column(
                 mainAxisSize: MainAxisSize.min, // Prevent overflow by limiting height
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -110,29 +111,8 @@ class WelcomePage extends StatelessWidget {
                     ),
                   ),
                    const SizedBox(height: 10),
-
-                  // CORS Test Button
-                  // SizedBox(
-                  //   width: double.infinity,
-                  //   child: ElevatedButton(
-                  //     onPressed: () {
-                  //       // Navigate to CORS Test screen
-                  //       Navigator.pushNamed(context, '/test_cors');
-                  //     },
-                  //     style: ElevatedButton.styleFrom(
-                  //       backgroundColor: const Color(0xFFBB0000), // Button color for CORS Test
-                  //       padding: const EdgeInsets.symmetric(vertical: 15),
-                  //       shape: RoundedRectangleBorder(
-                  //         borderRadius: BorderRadius.circular(30),
-                  //       ),
-                  //     ),
-                  //     child: const Text(
-                  //       "Test CORS",
-                  //       style: TextStyle(fontSize: 18, color: Colors.white),
-                  //     ),
-                  //   ),
-                  // ),
                 ],
+              ),
               ),
             ),
           ),

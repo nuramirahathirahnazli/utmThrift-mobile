@@ -6,7 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:utmthrift_mobile/models/order_model.dart';
 
 class OrderService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+// static const String baseUrl = 'http://127.0.0.1:8000/api';
+static const String baseUrl = "http://10.160.32.73:8000/api";
 
   /// Get token from shared preferences
   static Future<String?> _getToken() async {
@@ -23,17 +24,18 @@ class OrderService {
     };
   }
 
-  /// Create a new Meet Up order
-  static Future<bool> createMeetUpOrder({
+  /// Create a new order
+  static Future<int?> createOrder({
     required int buyerId,
     required int itemId,
     required int sellerId,
     required int quantity,
+    required String paymentMethod,
   }) async {
     final token = await _getToken();
     if (token == null) {
       print('[OrderService] Token is null');
-      return false;
+      return null;
     }
 
     final url = Uri.parse('$baseUrl/orders/create');
@@ -43,7 +45,7 @@ class OrderService {
       'item_id': itemId,
       'seller_id': sellerId,
       'quantity': quantity,
-      'payment_method': 'Meet Up',
+      'payment_method': paymentMethod,
     });
 
     try {
@@ -54,17 +56,21 @@ class OrderService {
       );
 
       if (response.statusCode == 201) {
-        print('[OrderService] Order created successfully');
-        return true;
+        final responseData = jsonDecode(response.body);
+        final int orderId = responseData['order']['id']; // <-- Corrected line
+        print('[OrderService] Order created successfully with ID $orderId');
+        return orderId;
       } else {
         print('[OrderService] Order creation failed: ${response.statusCode} ${response.body}');
-        return false;
+        return null;
       }
     } catch (e) {
       print('[OrderService] Exception: $e');
-      return false;
+      return null;
     }
   }
+
+
 
   /// Confirm a Meet Up order (set status to completed and item to sold)
   static Future<bool> confirmOrder(int orderId) async {
@@ -101,6 +107,27 @@ class OrderService {
     }
   }
 
+  /// Confirm payment when user click on back to order
+  static Future<void> manualConfirmOrder(int orderId) async {
+    final token = await _getToken();
+    final url = Uri.parse('$baseUrl/orders/$orderId/manual-confirm');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Order manually confirmed');
+    } else {
+      print('Failed to confirm order: ${response.body}');
+      throw Exception('Failed to confirm order');
+    }
+  }
+
   static Future<List<Order>> getBuyerOrders() async {
     final token = await _getToken();
     final url = Uri.parse('$baseUrl/orders/buyer');
@@ -121,7 +148,3 @@ class OrderService {
     }
   }
 }
-
-
-// HISTORY PURCHASES PAGE AND MEET WITH SELLER DAH SETTLE - BELUM COMMIT
-// terbenti dkt bila nak tekan history details page. tengok balik nanti

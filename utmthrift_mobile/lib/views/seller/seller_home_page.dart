@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:utmthrift_mobile/config/api_config.dart';
 
 // Services
 import 'package:utmthrift_mobile/services/chat_service.dart';
@@ -168,7 +169,8 @@ class HomeScreenContent extends StatefulWidget {
 }
 
 class _HomeScreenContentState extends State<HomeScreenContent> {
-  final String baseUrl = 'http://127.0.0.1:8000';
+  final String baseUrl = ApiConfig.baseUrl;  
+  
   final String imageFolder = '/storage/events/';
 
   @override
@@ -383,3 +385,4 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 }
+

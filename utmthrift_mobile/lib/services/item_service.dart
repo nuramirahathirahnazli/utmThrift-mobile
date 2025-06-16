@@ -3,13 +3,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:utmthrift_mobile/config/api_config.dart';
 import 'package:utmthrift_mobile/models/item_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import 'package:http_parser/http_parser.dart'; // for MediaType
 
+const String baseUrl = ApiConfig.baseUrl;
+
 class ItemService {
-  static const String baseUrl = "http://127.0.0.1:8000/api";
 
   // Fetch item categories with authorization
   Future<List<dynamic>> fetchCategories() async {

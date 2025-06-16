@@ -5,10 +5,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:utmthrift_mobile/config/api_config.dart';
 
-class PaymentService {
-//  static const String baseUrl = 'http://127.0.0.1:8000/api';
-  static const String baseUrl = "http://10.160.32.73:8000/api";
+const String baseUrl = ApiConfig.baseUrl;
+
+class PaymentService {  
 
   /// Get token from shared preferences
   static Future<String?> _getToken() async {

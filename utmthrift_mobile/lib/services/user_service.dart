@@ -2,12 +2,13 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:utmthrift_mobile/config/api_config.dart';
 import 'package:utmthrift_mobile/models/user_model.dart';
 
-class UserService {
- static const String baseUrl = "http://127.0.0.1:8000/api"; //localhost
- // static const String baseUrl = "http://10.211.98.11:8000/api"; //real device - kena check ipconfig dkt cmd sbb selalu tukar2 address dia
+const String baseUrl = ApiConfig.baseUrl;
 
+class UserService {
+  
   /// **Fetch User Profile**
   static Future<UserModel?> getUserProfile(String token) async {
     final response = await http.get(

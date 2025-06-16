@@ -3,10 +3,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:utmthrift_mobile/config/api_config.dart';
 import 'package:utmthrift_mobile/models/itemcart_model.dart';
 
 class CartService {
-  static const String baseUrl = "http://127.0.0.1:8000/api";
+  
+  final String baseUrl = ApiConfig.baseUrl;
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();

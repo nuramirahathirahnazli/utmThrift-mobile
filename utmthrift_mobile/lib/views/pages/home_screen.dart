@@ -265,7 +265,7 @@ class HomeScreenContent extends StatefulWidget {
 }
 
 class _HomeScreenContentState extends State<HomeScreenContent> {
-  final String baseUrl = 'http://127.0.0.1:8000';
+  final String baseUrl = 'http://.1:8000';
   final String imageFolder = '/storage/events/';
 
   @override

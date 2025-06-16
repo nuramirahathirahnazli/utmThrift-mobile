@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:utmthrift_mobile/config/api_config.dart';
 import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
 import 'package:utmthrift_mobile/views/auth/sign_in.dart';
 
+const String baseUrl = ApiConfig.baseUrl;
+
 class AuthService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api'; //localhost
- // static const String baseUrl = 'http://10.211.98.11:8000/api'; //real device
 
   // Register User
   Future<String?> registerUser({

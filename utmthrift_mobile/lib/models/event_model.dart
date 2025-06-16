@@ -1,5 +1,7 @@
 // ignore_for_file: avoid_print
 
+import 'package:utmthrift_mobile/config/api_config.dart';
+
 class Event {
   final int id;
   final String title;
@@ -10,7 +12,7 @@ class Event {
   final String location;
   final String poster;
 
-  static const String baseUrl = 'http://127.0.0.1:8000/';
+  final String baseUrl = ApiConfig.baseUrl;  
 
   Event({
     required this.id,

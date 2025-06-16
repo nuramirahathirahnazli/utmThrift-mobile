@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:utmthrift_mobile/config/api_config.dart';
 import 'package:utmthrift_mobile/models/user_model.dart';
 import 'package:utmthrift_mobile/services/user_service.dart';
 import 'package:utmthrift_mobile/services/auth_service.dart';
@@ -71,9 +72,8 @@ class ProfileViewModel extends ChangeNotifier {
     required String userRole,
     required String userType,
   }) async {
-     final url = Uri.parse("http://127.0.0.1:8000/api/profile/update"); //localhost
-    //  final url = Uri.parse("http://10.211.98.11:8000/api/profile/update"); //real device
-    
+    final url = Uri.parse(ApiConfig.baseUrl); //localhost
+
     String? token = await AuthService.getToken(); // 🔹 Fetch auth token
     if (token == null) {
       print("No token found. Cannot update profile.");

@@ -3,10 +3,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:utmthrift_mobile/config/api_config.dart';
 import '../models/event_model.dart';
 
+const String baseUrl = ApiConfig.baseUrl;
+
 class EventService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
 
   // Fetch latest events (with optional limit), requires auth token
   static Future<List<Event>> fetchEvents({int limit = 4}) async {

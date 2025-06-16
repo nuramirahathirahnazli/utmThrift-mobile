@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:utmthrift_mobile/config/api_config.dart';
 
 import 'package:utmthrift_mobile/services/auth_service.dart';
 import 'package:utmthrift_mobile/services/item_service.dart';
@@ -99,10 +100,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final userVM = Provider.of<UserViewModel>(context, listen: false);
-      await userVM.loadUser(); // Make sure user is loaded
+      await userVM.loadUser(); 
 
       final chatVM = Provider.of<ChatMessageViewModel>(context, listen: false);
-        chatVM.initialize(currentUserId: userVM.userId);// Pass current user ID here
+        chatVM.initialize(currentUserId: userVM.userId);
 
         if (chatVM.currentUserId != null) {
           await chatVM.fetchUnreadMessagesForSeller();
@@ -265,7 +266,7 @@ class HomeScreenContent extends StatefulWidget {
 }
 
 class _HomeScreenContentState extends State<HomeScreenContent> {
-  final String baseUrl = 'http://.1:8000';
+  final String baseUrl = ApiConfig.baseUrl;
   final String imageFolder = '/storage/events/';
 
   @override

@@ -1,11 +1,15 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Add this import
 import 'package:utmthrift_mobile/services/auth_service.dart';
+import 'package:utmthrift_mobile/viewmodels/chatmessage_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/user_viewmodel.dart';
 
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
@@ -30,8 +34,9 @@ class _ExplorePageState extends State<ExplorePage> {
   DateTime? _lastFavoriteTap;
 
   int? _userId;
-  final int _chatCount = 3; // Replace with dynamic data later
 
+  Timer? _debounce;
+  
   final List<String> _categories = [
     "Women Clothes", "Books & Notes", "Electronics", "Beauty & Health",
     "Men Clothes", "Furniture", "Sports & Outdoors", "Toys & Games",
@@ -73,24 +78,54 @@ class _ExplorePageState extends State<ExplorePage> {
     _loadCachedFavorites();
     _loadFavorites();
     
+
     _searchController.addListener(() {
-      _loadItems();
+      if (_debounce?.isActive ?? false) _debounce!.cancel();
+      _debounce = Timer(const Duration(milliseconds: 500), () {
+        _loadItems();
+      });
     });
 
+
     _initUserAndData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final userVM = Provider.of<UserViewModel>(context, listen: false);
+      await userVM.loadUser(); 
+
+      final chatVM = Provider.of<ChatMessageViewModel>(context, listen: false);
+        chatVM.initialize(currentUserId: userVM.userId);
+
+        if (chatVM.currentUserId != null) {
+          await chatVM.fetchUnreadMessagesForSeller();
+
+          // **Fetch unread count from API for the badge**
+          await chatVM.fetchUnreadMessageCount();
+        } else {
+          print('Error: currentUserId is null in SellerHomeScreen initState');
+        }
+    });
   }
 
   Future<void> _initUserAndData() async {
     _userId = await AuthService.getCurrentUserId();
     if (_userId == null) {
-      // Handle user not logged in (optional)
       print('No logged-in user found.');
       return;
     }
-    await _loadCachedFavorites();
-    await _loadFavorites();
-    await _loadItems();
+
+    final cartVM = Provider.of<CartViewModel>(context, listen: false);
+    final chatVM = Provider.of<ChatMessageViewModel>(context, listen: false);
+
+    await Future.wait([
+      _loadCachedFavorites(),
+      _loadFavorites(),
+      _loadItems(),
+      cartVM.loadCartItems(_userId!),
+      chatVM.fetchUnreadMessageCount(),
+    ]);
   }
+
 
   Future<void> _loadFavorites() async {
     if (_userId == null) return; // user not logged in
@@ -107,9 +142,11 @@ class _ExplorePageState extends State<ExplorePage> {
     }
   }
 
+  
   @override
   void dispose() {
     _searchController.dispose();
+    _debounce?.cancel(); // Dispose debounce timer
     super.dispose();
   }
 
@@ -243,13 +280,14 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   Widget build(BuildContext context) {
     final cartViewModel = Provider.of<CartViewModel>(context);
-    
+    final chatVM = Provider.of<ChatMessageViewModel>(context);
+
     return Scaffold(
       appBar: TopNavBar(
         searchController: _searchController,
         onSearchSubmitted: (_) => _loadItems(),
-        cartCount: cartViewModel.itemCount,
-        chatCount: _chatCount,
+        cartCount: cartViewModel.itemCount, // ✅ Cart count
+        chatCount: chatVM.unreadCount,      // ✅ Chat unread count
         onCartPressed: () {
           Navigator.pushNamed(context, '/cartPage'); // or your cart route
         },

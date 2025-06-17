@@ -71,8 +71,6 @@ class OrderService {
     }
   }
 
-
-
   /// Confirm a Meet Up order (set status to completed and item to sold)
   static Future<bool> confirmOrder(int orderId) async {
     final token = await _getToken();
@@ -145,7 +143,10 @@ class OrderService {
       final List jsonData = jsonDecode(response.body);
       return jsonData.map((json) => Order.fromJson(json)).toList();
     } else {
+      print('⚠️ Orders fetch failed - status: ${response.statusCode}');
+      print('Response body: ${response.body}');
       throw Exception('Failed to load orders');
+
     }
   }
 }

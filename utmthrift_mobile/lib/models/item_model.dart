@@ -57,16 +57,22 @@ class Item {
 
     // Extract seller ID - UPDATED to match backend response
     int extractedSellerId = 0;
+
+    // Corrected logic to support both seller_id and fallback to user_id
     if (json['seller_id'] != null) {
       extractedSellerId = int.tryParse(json['seller_id'].toString()) ?? 0;
+    } else if (json['user_id'] != null) {
+      extractedSellerId = int.tryParse(json['user_id'].toString()) ?? 0;
     }
+
+
 
     return Item(
       id: json['id'] as int,
       name: json['name'] as String,
       description: json['description'] as String,
       price: double.tryParse(json['price'].toString()) ?? 0.0,
-       condition: json['condition'] ?? '',
+      condition: json['condition'] ?? '',
       imageUrls: images,
       category: categoryName,
       seller: sellerName,

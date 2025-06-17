@@ -3,8 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:utmthrift_mobile/views/order/order_history_details_page.dart';
+import 'package:utmthrift_mobile/views/review/leave_review_page.dart';
 import '../../models/order_model.dart';
 import '../../services/order_service.dart';
+import 'package:utmthrift_mobile/main.dart'; 
 
 class OrderHistoryPage extends StatefulWidget {
 
@@ -21,16 +23,42 @@ class OrderHistoryPage extends StatefulWidget {
   State<OrderHistoryPage> createState() => _OrderHistoryPageState();
 }
 
-class _OrderHistoryPageState extends State<OrderHistoryPage> {
+class _OrderHistoryPageState extends State<OrderHistoryPage> with RouteAware {
   late Future<List<Order>> _ordersFuture;
+  int _buyerId = 0;
 
   @override
   void initState() {
     super.initState();
     _ordersFuture = OrderService.getBuyerOrders();
     _initializeOrders();
-    _handleWebAuthToken();
-   
+    _prepareAsyncData(); 
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  void _prepareAsyncData() {
+    _handleWebAuthToken(); 
+    _loadBuyerId();        
+  }
+
+  @override
+  void didPopNext() {
+    // Called when coming back to this page
+    print('>> Returned to OrderHistoryPage, refreshing...');
+    setState(() {
+      _ordersFuture = OrderService.getBuyerOrders(); // re-fetch updated orders
+    });
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this); // Don't forget this!
+    super.dispose();
   }
 
   Future<void> _handleWebAuthToken() async {
@@ -70,10 +98,17 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       _ordersFuture = OrderService.getBuyerOrders(); // initial load
     }
   }
+  
+  Future<void> _loadBuyerId() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _buyerId = prefs.getInt('user_id') ?? 0;
+    });
+  }
 
   Widget _buildOrderCard(Order order) {
-    print('>> OrderHistoryPage: refresh=${widget.refresh}, paymentResult=${widget.paymentResult}');
-    print('DEBUG >> Order item name: ${order.item?.name}');
+  print('>> OrderHistoryPage: refresh=${widget.refresh}, paymentResult=${widget.paymentResult}');
+  print('DEBUG >> Order item name: ${order.item?.name}');
   return GestureDetector(
     onTap: () {
       Navigator.push(
@@ -97,10 +132,38 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 padding: const EdgeInsets.only(top: 8),
                 child: ElevatedButton(
                   onPressed: () => _confirmOrder(order.id),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                   child: const Text('Confirm Meet Up'),
+                ),
+              ),
+          // Leave Review Button for Completed Orders
+            if (order.status.toLowerCase() == 'completed')
+              ElevatedButton(
+                onPressed: order.alreadyReviewed
+                    ? null // disables the button
+                    : () {
+                        final item = order.item!;
+                        final int sellerId = item.sellerId;
+                        final int buyerId = _buyerId;
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => LeaveReviewPage(
+                              orderId: order.id,
+                              itemId: item.id,
+                              buyerId: buyerId,
+                              sellerId: sellerId,
+                            ),
+                          ),
+                        );
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      order.alreadyReviewed ? Colors.grey : Colors.orange,
+                ),
+                child: Text(
+                  order.alreadyReviewed ? 'Review Submitted' : 'Leave a Review',
                 ),
               ),
           ],

@@ -7,12 +7,15 @@ class Order {
   final String status;
   final String paymentMethod;
   final Item? item;
+  final bool alreadyReviewed;
 
   Order({
     required this.id,
     required this.status,
     required this.paymentMethod,
     this.item,
+    required this.alreadyReviewed,
+    
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -31,6 +34,7 @@ class Order {
       status: json['order_status'] ?? 'Unknown Status',
       paymentMethod: json['payment_method'] ?? 'Unknown Method',
       item: parsedItem,
+      alreadyReviewed: json['already_reviewed'] ?? false,
     );
   }
 }

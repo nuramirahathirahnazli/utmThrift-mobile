@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:utmthrift_mobile/views/buyer/seller_application_page.dart';
 import 'package:utmthrift_mobile/views/order/order_history_page.dart';
 import 'package:utmthrift_mobile/views/profile/profile_edit.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
@@ -26,7 +27,6 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     Provider.of<ProfileViewModel>(context, listen: false).fetchUserProfile();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +71,12 @@ class _ProfilePageState extends State<ProfilePage> {
               const Text("More Information", 
                 style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
               const SizedBox(height: 10),
-              _buildMenuOption(Icons.store, "Become a Seller", () {}),
+              _buildMenuOption(Icons.store, "Become a Seller", () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SellerApplicationPage()),
+                );
+              }),
               _buildMenuOption(Icons.settings, "Settings", () {}),
               _buildLogoutOption(context),
             ],
@@ -94,33 +99,37 @@ class _ProfilePageState extends State<ProfilePage> {
         user?.profilePicture != null
             ? CircleAvatar(
                 radius: 40,
-                backgroundImage: NetworkImage(user!.profilePicture!),  // Use the profile URL from backend
+                backgroundImage: NetworkImage(user!.profilePicture!),
               )
             : const CircleAvatar(
                 radius: 40,
                 backgroundImage: AssetImage('assets/images/profile_pic.png'),
               ),
         const SizedBox(width: 15),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text("Hi, ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(user?.name ?? "No data", 
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.color10)),
-              ],
-            ),
-            Text(user?.email ?? "No email", style: const TextStyle(fontSize: 14, color: Colors.grey)),
-            Text("Since ${user?.createdAtFormatted ?? "Unknown"}", 
-                style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
+        Expanded( // <-- Add this wrapper
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text("Hi, ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Flexible( // <-- Wrap the name to avoid long text overflow
+                    child: Text(
+                      user?.name ?? "No data",
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.color10),
+                    ),
+                  ),
+                ],
+              ),
+              Text(user?.email ?? "No email", style: const TextStyle(fontSize: 14, color: Colors.grey)),
+              Text("Since ${user?.createdAtFormatted ?? "Unknown"}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
         ),
       ],
     );
   }
-
-
 
   Widget _buildMenuOption(IconData icon, String title, VoidCallback onTap) {
     return Card(
@@ -143,7 +152,6 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
 
   Widget _buildLogoutOption(BuildContext context) {
     return Card(

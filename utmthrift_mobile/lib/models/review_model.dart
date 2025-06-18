@@ -5,6 +5,7 @@ class Review {
   final int rating;
   final String? comment;
   final String createdAt;
+  final String? buyerName;
 
   Review({
     required this.id,
@@ -13,16 +14,19 @@ class Review {
     required this.rating,
     this.comment,
     required this.createdAt,
+    this.buyerName,
   });
 
   factory Review.fromJson(Map<String, dynamic> json) {
     return Review(
-      id: json['id'],
-      buyerId: json['buyer_id'],
-      sellerId: json['seller_id'],
-      rating: json['rating'],
+      id: int.tryParse(json['id'].toString()) ?? 0,
+      buyerId: int.tryParse(json['buyer_id'].toString()) ?? 0,
+      sellerId: int.tryParse(json['seller_id'].toString()) ?? 0,
+      rating: int.tryParse(json['rating'].toString()) ?? 0,
       comment: json['comment'],
-      createdAt: json['created_at'],
+      createdAt: json['created_at'].toString(),
+      buyerName: json['buyer_name'],
     );
   }
+
 }

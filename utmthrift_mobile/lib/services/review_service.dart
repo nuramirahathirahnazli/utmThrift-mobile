@@ -71,12 +71,12 @@ class ReviewService {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
 
-    // 🔍 Debug log: print the payload
+    // Debug log: print the payload
     print('Submitting review with data:');
     print('order_id: $orderId');
     print('item_id: $itemId');
     print('buyer_id: $buyerId');
-    print('seller_id: $sellerId'); // 👈 This is what you asked
+    print('seller_id: $sellerId'); 
     print('rating: $rating');
     print('comment: ${comment ?? ""}');
 
@@ -94,15 +94,15 @@ class ReviewService {
     );
 
     if (response.statusCode == 201) {
-      print('✅ Review submitted successfully.');
+      print('Review submitted successfully.');
       return true;
     } else {
-      print('❌ Review submission failed with status: ${response.statusCode}');
+      print('Review submission failed with status: ${response.statusCode}');
       print('Response body: ${response.body}');
       return false;
     }
   } catch (e) {
-    print('❗ Error in submitReview: $e');
+    print('Error in submitReview: $e');
     return false;
   }
 }

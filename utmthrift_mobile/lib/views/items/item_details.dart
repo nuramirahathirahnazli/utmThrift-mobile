@@ -7,6 +7,7 @@ import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
 import 'package:utmthrift_mobile/views/chat/chat_screen.dart';
+import 'package:utmthrift_mobile/views/review/seller_review_profile_page.dart';
 
 
 class ItemDetailsScreen extends StatefulWidget {
@@ -146,10 +147,39 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    'Seller: ${item['seller']?['name'] ?? 'Unknown'}',
-                    style: const TextStyle(fontSize: 16),
+                  Row(
+                    children: [
+                      const Text(
+                        'Seller: ',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          final sellerId = item['seller']?['id'];
+                          if (sellerId != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SellerReviewProfilePage(sellerId: sellerId),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Seller ID not available.')),
+                            );
+                          }
+                        },
+                        child: Text(
+                          item['seller']?['name'] ?? 'Unknown',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+
                   const SizedBox(height: 16),
                   const Text(
                     'Images:',

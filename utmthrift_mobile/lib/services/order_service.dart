@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:utmthrift_mobile/config/api_config.dart';
@@ -127,6 +128,103 @@ class OrderService {
     }
   }
 
+  static Future<bool> uploadSellerQrCode(File qrFile) async {
+    final token = await _getToken();
+    if (token == null) return false;
+
+    final url = Uri.parse('$baseUrl/seller/upload-qr-code'); // Your Laravel API
+
+    final request = http.MultipartRequest('POST', url);
+    request.headers.addAll({
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/json',
+    });
+
+    request.files.add(await http.MultipartFile.fromPath('qr_code', qrFile.path));
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      print('[Upload QR] Response: ${response.statusCode}, ${response.body}');
+      return response.statusCode == 200;
+    } catch (e) {
+      print('[Upload QR] Exception: $e');
+      return false;
+    }
+  }
+
+  static Future<String?> getSellerQrCode(int sellerId) async {
+    final token = await _getToken();
+    final url = Uri.parse('$baseUrl/seller/$sellerId/qr-code');
+
+    print('[OrderService] Fetching QR Code from: $url');
+
+    final response = await http.get( 
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    print('[OrderService] QR Code response status: ${response.statusCode}');
+    print('[OrderService] QR Code response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      return jsonData['qr_code_image'];
+    } else {
+      print('[OrderService] Failed to fetch QR Code');
+    }
+
+    return null;
+  }
+
+
+  static Future<bool> uploadReceipt({
+    required int orderId,
+    required File receiptFile,
+  }) async {
+    final token = await _getToken();
+    if (token == null) {
+      print('[OrderService] Token is null for uploadReceipt');
+      return false;
+    }
+
+    final url = Uri.parse('$baseUrl/order/$orderId/upload-receipt');
+    print('[OrderService] Uploading receipt to: $url');
+    print('[OrderService] Receipt file path: ${receiptFile.path}');
+
+    final request = http.MultipartRequest('POST', url);
+    request.headers.addAll({
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/json',
+    });
+
+    request.files.add(
+      await http.MultipartFile.fromPath('receipt', receiptFile.path),
+    );
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('[OrderService] Upload response status: ${response.statusCode}');
+      print('[OrderService] Upload response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        print('[OrderService] Receipt uploaded successfully');
+        return true;
+      } else {
+        print('[OrderService] Receipt upload failed: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('[OrderService] Exception while uploading receipt: $e');
+      return false;
+    }
+  }
+  
   static Future<List<Order>> getBuyerOrders() async {
     final token = await _getToken();
     final url = Uri.parse('$baseUrl/orders/buyer');

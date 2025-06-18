@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/views/buyer/seller_application_page.dart';
 import 'package:utmthrift_mobile/views/order/order_history_page.dart';
 import 'package:utmthrift_mobile/views/profile/profile_edit.dart';
+import 'package:utmthrift_mobile/views/seller/seller_upload_qrcode_page.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 import 'package:utmthrift_mobile/services/auth_service.dart';
 import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
@@ -71,12 +72,20 @@ class _ProfilePageState extends State<ProfilePage> {
               const Text("More Information", 
                 style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
               const SizedBox(height: 10),
-              _buildMenuOption(Icons.store, "Become a Seller", () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SellerApplicationPage()),
-                );
-              }),
+              widget.userType == "Seller"
+                ? _buildMenuOption(Icons.qr_code, "Upload QR Code", () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UploadQrCodePage()),
+                    );
+                  })
+                : _buildMenuOption(Icons.store, "Become a Seller", () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SellerApplicationPage()),
+                    );
+                  }),
+
               _buildMenuOption(Icons.settings, "Settings", () {}),
               _buildLogoutOption(context),
             ],

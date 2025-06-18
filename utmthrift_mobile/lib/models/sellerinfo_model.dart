@@ -28,4 +28,16 @@ class SellerInfo {
       location: json['location'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'store_name': storeName,
+      'name': name,
+      'contact': contact,
+      'user_role': userRole,
+      'faculty': faculty,
+      'location': location,
+    };
+  }
 }

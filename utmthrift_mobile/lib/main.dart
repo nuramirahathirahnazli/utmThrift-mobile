@@ -19,6 +19,7 @@ import 'package:utmthrift_mobile/viewmodels/chatmessage_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/payment_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/review_viewmodel.dart';
 import 'package:utmthrift_mobile/viewmodels/sellerapplication_viewmodel.dart';
+import 'package:utmthrift_mobile/viewmodels/qrpayment_viewmodel.dart';
 
 import 'views/pages/welcome_page.dart';
 import 'views/seller/seller_home_page.dart';
@@ -54,7 +55,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => PaymentViewModel()),
         ChangeNotifierProvider(create: (_) => ReviewViewModel()),
         ChangeNotifierProvider(create: (_) => SellerApplicationViewModel()),
-
+        ChangeNotifierProvider(create: (_) => QRPaymentViewModel()),
     
     ],
       child: const MyApp(),

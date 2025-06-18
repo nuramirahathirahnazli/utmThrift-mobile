@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:utmthrift_mobile/services/order_service.dart';
 
 import 'package:utmthrift_mobile/services/user_service.dart';
 import 'package:utmthrift_mobile/services/auth_service.dart';
@@ -10,6 +11,7 @@ import 'package:utmthrift_mobile/models/itemcart_model.dart';
 
 import 'package:utmthrift_mobile/views/payment/meet_with_seller_page.dart';
 import 'package:utmthrift_mobile/views/payment/online_banking_confirmation_page.dart';
+import 'package:utmthrift_mobile/views/payment/qr_payment_page.dart';
 
 class CheckoutDetailsPage extends StatefulWidget {
   final CartItem item;
@@ -133,9 +135,32 @@ class _CheckoutDetailsPageState extends State<CheckoutDetailsPage> {
                             builder: (context) => PaymentConfirmationPage(item: widget.item, user: _user!),
                           ),
                         );
-                      } else {
-                        // Handle QR Code payment or others here
+                      } else if (_selectedPayment == "QR Code") {
+                        final orderId = await OrderService.createOrder(
+                          buyerId: _user!.id,
+                          itemId: widget.item.itemId,
+                          sellerId: widget.item.sellerId,
+                          quantity: 1, // or widget.item.quantity if you have it
+                          paymentMethod: 'QR Code',
+                        );
+
+                        if (orderId != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => QRPaymentPage(
+                                orderId: orderId,
+                                sellerId: widget.item.sellerId,
+                              ),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Failed to place order. Please try again.')),
+                          );
+                        }
                       }
+
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

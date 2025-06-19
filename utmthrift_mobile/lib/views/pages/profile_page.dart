@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/views/buyer/seller_application_page.dart';
 import 'package:utmthrift_mobile/views/order/order_history_page.dart';
 import 'package:utmthrift_mobile/views/profile/profile_edit.dart';
+import 'package:utmthrift_mobile/views/seller/seller_sales_tracking_page.dart';
 import 'package:utmthrift_mobile/views/seller/seller_upload_qrcode_page.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 import 'package:utmthrift_mobile/services/auth_service.dart';
@@ -59,8 +60,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   MaterialPageRoute(builder: (context) => const EditProfilePage()),
                 );
               }),
-
-              _buildMenuOption(Icons.lock, "Password", () {}),
               _buildMenuOption(Icons.favorite, "Liked", () {}),
               _buildMenuOption(Icons.shopping_cart, "My Purchases", () {
                 Navigator.push(
@@ -85,7 +84,17 @@ class _ProfilePageState extends State<ProfilePage> {
                       MaterialPageRoute(builder: (context) => const SellerApplicationPage()),
                     );
                   }),
-
+              if (widget.userType == "Seller") ...[
+                _buildMenuOption(Icons.track_changes, "Track Sales", () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SalesTrackingPage(
+                        sellerId: profileVM.user?.id ?? 0),
+                    ),
+                  );
+                }),
+              ],
               _buildMenuOption(Icons.settings, "Settings", () {}),
               _buildLogoutOption(context),
             ],
@@ -115,7 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 backgroundImage: AssetImage('assets/images/profile_pic.png'),
               ),
         const SizedBox(width: 15),
-        Expanded( // <-- Add this wrapper
+        Expanded( 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

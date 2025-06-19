@@ -22,7 +22,7 @@ class SellerApplicationService {
     final token = await _getToken();
     if (token == null) throw Exception('No authentication token found');
 
-    final uri = Uri.parse('$baseUrl/apply-seller'); // <-- Define uri correctly
+    final uri = Uri.parse('$baseUrl/apply-seller'); 
 
     var request = http.MultipartRequest('POST', uri)
       ..headers.addAll({

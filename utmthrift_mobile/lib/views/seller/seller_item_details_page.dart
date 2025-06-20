@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:provider/provider.dart';
-import 'dart:convert';
 
 import 'package:utmthrift_mobile/views/seller/seller_edit_item_details_page.dart';
 
@@ -93,9 +92,9 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
 
           print("Fetched item: $item");
 
-          final images = item['image'] is String
-              ? List<String>.from(jsonDecode(item['image']))
-              : (item['image'] as List?)?.cast<String>() ?? [];
+          final images = item['images'] is List
+              ? List<String>.from(item['images'])
+              : [];
 
           print("Decoded images: $images");
 

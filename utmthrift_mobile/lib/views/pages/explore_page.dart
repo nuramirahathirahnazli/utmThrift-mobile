@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously
 
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
@@ -165,7 +166,10 @@ class _ExplorePageState extends State<ExplorePage> {
             _selectedCondition == null || item.condition == _selectedCondition;
         final matchesPrice = _selectedPriceRange == null || _matchPriceRange(item.price, _selectedPriceRange!);
 
-        return matchesSearch && matchesCategory && matchesCondition && matchesPrice;
+        // To exclude seller's own items
+        final isNotOwnItem = _userId == null || item.sellerId != _userId;
+
+        return matchesSearch && matchesCategory && matchesCondition && matchesPrice && isNotOwnItem;
       }).toList();
 
       if (mounted) {

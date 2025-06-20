@@ -21,6 +21,7 @@ import 'package:utmthrift_mobile/views/events/all_events_page.dart';
 import 'package:utmthrift_mobile/views/events/event_details_page.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 import 'package:utmthrift_mobile/views/items/item_category.dart';
+import 'package:utmthrift_mobile/views/pages/explore_page.dart';
 
 //Page based on bottom menu navigation
 import 'package:utmthrift_mobile/views/pages/profile_page.dart';
@@ -141,7 +142,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
         );
 
       case 1:
-        return const Center(child: Text("Explore Page - Coming Soon"));
+        return const ExplorePage();
       case 2:
         return const AddItemScreen(); 
       case 3:

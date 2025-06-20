@@ -12,6 +12,8 @@ class ChatScreen extends StatefulWidget {
   final int currentUserId;
   final bool isSeller;
   final String? initialMessage;
+  final int? orderId;
+  final String? paymentMethod;
 
   const ChatScreen({
     super.key,
@@ -22,6 +24,8 @@ class ChatScreen extends StatefulWidget {
     required this.currentUserId,
     this.isSeller = false,
     this.initialMessage,
+    this.orderId,
+    this.paymentMethod,
   });
 
   @override
@@ -36,9 +40,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
   bool _canSend = false;
 
+
   @override
   void initState() {
     super.initState();
+
     _messageController = TextEditingController(text: widget.initialMessage ?? '');
 
     _messageController.addListener(() {
@@ -56,15 +62,36 @@ class _ChatScreenState extends State<ChatScreen> {
       currentUserId: widget.currentUserId,
       sellerId: widget.sellerId,
       itemId: widget.itemId ?? 0,
+      paymentMethod: widget.paymentMethod,
     );
 
-    _viewModel.loadMessages().then((_) {
+    _viewModel.loadMessages().then((_) async {
       _viewModel.markMessagesAsRead(
         chatPartnerId: widget.sellerId,
         userType: widget.isSeller ? 'seller' : 'buyer',
         itemId: widget.itemId ?? 0,
       );
+
       _scrollToBottom();
+
+      final shouldSendInitialMessage = (widget.initialMessage?.trim().isNotEmpty ?? false);
+      final isBuyer = !widget.isSeller;
+      final isMeetUp = widget.paymentMethod == "Meet with Seller";
+
+      final lastMessage = _viewModel.messages.isNotEmpty ? _viewModel.messages.last : null;
+      final lastMessageFromBuyer = lastMessage?.senderId == widget.currentUserId;
+
+      if (shouldSendInitialMessage && isBuyer && isMeetUp && lastMessageFromBuyer) {
+        // Send initial message only if it’s not already in the messages
+        if (!_viewModel.messages.any((m) => m.message == widget.initialMessage!.trim())) {
+          await sendMessage(widget.initialMessage!.trim());
+          await Future.delayed(const Duration(seconds: 1));
+        }
+
+        if (!_viewModel.hasAutoReplyBeenSent("Please state the place to meet")) {
+          await _viewModel.sendAutoReplyFromSeller("Please state the place to meet");
+        }
+      }
     });
   }
 
@@ -87,9 +114,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        _scrollController.jumpTo(0);
       }
     });
   }
@@ -119,10 +146,23 @@ class _ChatScreenState extends State<ChatScreen> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Navigator.pop(context, true); // Return 'true' to trigger refresh
+              Navigator.pop(context, true); // Trigger refresh on return
             },
           ),
           title: Text("Chat with ${widget.sellerName}"),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.home),
+              tooltip: 'Go to Home',
+              onPressed: () {
+                if (widget.isSeller) {
+                  Navigator.of(context).pushNamedAndRemoveUntil('/seller_home', (route) => false);
+                } else {
+                  Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+                }
+              },
+            ),
+          ],
         ),
         body: Consumer<ChatMessageViewModel>(
           builder: (context, vm, _) {
@@ -130,7 +170,6 @@ class _ChatScreenState extends State<ChatScreen> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // Assume vm.messages is sorted oldest -> newest
             return Column(
               children: [
                 Expanded(
@@ -160,6 +199,39 @@ class _ChatScreenState extends State<ChatScreen> {
                     },
                   ),
                 ),
+
+                // Confirm Meeting Place Button (Seller)
+                if (widget.isSeller &&
+                    _viewModel.hasMeetingPlaceBeenStated() &&
+                    !_viewModel.hasConfirmedMeetPlace)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.check_circle),
+                      label: const Text("Confirm Meeting Place"),
+                      onPressed: () async {
+                        await _viewModel.confirmMeetingPlace();
+                        setState(() {});
+                      },
+                    ),
+                  ),
+
+                // Mark Item as Sold Button (Seller)
+                if (_viewModel.hasConfirmedMeetPlace &&
+                    !_viewModel.isItemMarkedSold)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.shopping_bag),
+                      label: const Text("Mark Item as Sold"),
+                      onPressed: () async {
+                        await _viewModel.markItemAsSold(widget.itemId!);
+                        setState(() {});
+                      },
+                    ),
+                  ),
+
+                // Chat input
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Row(

@@ -304,8 +304,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
       location: _locationController.text.trim(),
       userRole: _selectedUserRole ?? "Student",
       userType: profileVM.user?.userType ?? "Buyer",
-      profilePicture: cloudinaryUrl ?? "",
+      imageFile: _image, 
     );
+
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(

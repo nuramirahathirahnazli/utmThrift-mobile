@@ -3,12 +3,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:utmthrift_mobile/config/api_config.dart';
 import 'package:utmthrift_mobile/views/auth/otp_verification.dart';  
 
 class SignupViewModel extends ChangeNotifier {
   bool isLoading = false;
-   static const String baseUrl = 'http://127.0.0.1:8000/api'; //localhost
-  // static const String baseUrl = 'http://10.211.98.11:8000/api'; //real device
+  final String baseUrl = ApiConfig.baseUrl;  
 
   Future<bool> registerUser({
     required String name,

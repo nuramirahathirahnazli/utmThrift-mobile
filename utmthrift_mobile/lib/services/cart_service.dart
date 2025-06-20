@@ -3,10 +3,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:utmthrift_mobile/config/api_config.dart';
 import 'package:utmthrift_mobile/models/itemcart_model.dart';
 
 class CartService {
-  static const String baseUrl = "http://127.0.0.1:8000/api";
+  
+  final String baseUrl = ApiConfig.baseUrl;
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -83,5 +85,24 @@ class CartService {
     );
 
     return response.statusCode == 200;
+  }
+
+  /// Remove item from cart by item ID
+  Future<bool> removeItemFromCart(int itemId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No authentication token found');
+
+    final response = await http.delete(
+      Uri.parse('$baseUrl/cart/remove/$itemId'),
+      headers: _buildHeaders(token),
+    );
+
+    if (response.statusCode == 200) {
+      // Successfully removed
+      return true;
+    } else {
+      print('Failed to remove item from cart: ${response.statusCode} ${response.body}');
+      return false;
+    }
   }
 }

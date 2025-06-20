@@ -68,6 +68,7 @@ class _CartPageState extends State<CartPage> {
             itemCount: cartList.length,
             itemBuilder: (context, index) {
               final item = cartList[index];
+              print("DEBUG >> Checkout button pressed. sellerId: ${item.sellerId}, sellerName: ${item.sellerName}");
               return Card(
                 child: ListTile(
                   leading: item.imageUrl.isNotEmpty

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:utmthrift_mobile/config/api_config.dart';
+
 class OTPVerificationScreen extends StatefulWidget {
   final String email;
   OTPVerificationScreen({required this.email});
@@ -20,9 +22,8 @@ Future<void> verifyOTP() async {
   setState(() => isLoading = true);
 
   final response = await http.post(
-    Uri.parse("http://127.0.0.1:8000/api/verify-otp"), //localhost 
-   //Uri.parse("http://10.211.98.11:8000/api/verify-otp"), //real device
- 
+    Uri.parse(ApiConfig.baseUrl),
+  
     body: {
       'email': widget.email,
       'otp': otpController.text.trim(),

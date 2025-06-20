@@ -9,8 +9,9 @@ class Item {
   final double price;
   final String condition;
   final List<String> imageUrls;
-  final String category; // now storing category name, not ID
+  final String category; 
   final String? seller; 
+  final int sellerId;
   Item({
     required this.id,
     required this.name,
@@ -20,6 +21,7 @@ class Item {
     required this.imageUrls,
     required this.category,
     required this.seller,
+    required this.sellerId,
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -53,15 +55,28 @@ class Item {
     // Extract seller name - UPDATED to match backend response
     String sellerName = json['seller_name'] ?? 'Unknown'; // Direct field access
 
+    // Extract seller ID - UPDATED to match backend response
+    int extractedSellerId = 0;
+
+    // Corrected logic to support both seller_id and fallback to user_id
+    if (json['seller_id'] != null) {
+      extractedSellerId = int.tryParse(json['seller_id'].toString()) ?? 0;
+    } else if (json['user_id'] != null) {
+      extractedSellerId = int.tryParse(json['user_id'].toString()) ?? 0;
+    }
+
+
+
     return Item(
       id: json['id'] as int,
       name: json['name'] as String,
       description: json['description'] as String,
       price: double.tryParse(json['price'].toString()) ?? 0.0,
-       condition: json['condition'] ?? '',
+      condition: json['condition'] ?? '',
       imageUrls: images,
       category: categoryName,
       seller: sellerName,
+      sellerId: extractedSellerId,
     );
   }
 
@@ -75,6 +90,7 @@ class Item {
       'condition': condition,
       'images': imageUrls,  
       'category': category, 
+      'seller_id': sellerId,
     };
   }
 }

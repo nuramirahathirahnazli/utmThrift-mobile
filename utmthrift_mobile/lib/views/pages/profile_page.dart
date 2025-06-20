@@ -1,9 +1,13 @@
 //profile page untuk buyer & seller
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:utmthrift_mobile/views/buyer/seller_application_page.dart';
+import 'package:utmthrift_mobile/views/order/order_history_page.dart';
 import 'package:utmthrift_mobile/views/profile/profile_edit.dart';
+import 'package:utmthrift_mobile/views/seller/seller_sales_tracking_page.dart';
+import 'package:utmthrift_mobile/views/seller/seller_upload_qrcode_page.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 import 'package:utmthrift_mobile/services/auth_service.dart';
 import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
@@ -25,7 +29,6 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     Provider.of<ProfileViewModel>(context, listen: false).fetchUserProfile();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -51,21 +54,58 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               _buildProfileHeader(profileVM),
               const SizedBox(height: 20),
-              _buildMenuOption(Icons.person, "Profile", () {
-                Navigator.push(
+              _buildMenuOption(Icons.person, "Profile", () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const EditProfilePage()),
                 );
-              }),
 
-              _buildMenuOption(Icons.lock, "Password", () {}),
+                // After coming back from EditProfilePage, refresh profile
+                Provider.of<ProfileViewModel>(context, listen: false).fetchUserProfile();
+                
+                // Show feedback to user
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Profile refreshed successfully!"),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }),
               _buildMenuOption(Icons.favorite, "Liked", () {}),
-              _buildMenuOption(Icons.shopping_cart, "My Purchases", () {}),
+              _buildMenuOption(Icons.shopping_cart, "My Purchases", () {
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => const OrderHistoryPage()),
+                );
+              }),
               const SizedBox(height: 20),
               const Text("More Information", 
                 style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
               const SizedBox(height: 10),
-              _buildMenuOption(Icons.store, "Become a Seller", () {}),
+              widget.userType == "Seller"
+                ? _buildMenuOption(Icons.qr_code, "Upload QR Code", () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UploadQrCodePage()),
+                    );
+                  })
+                : _buildMenuOption(Icons.store, "Become a Seller", () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SellerApplicationPage()),
+                    );
+                  }),
+              if (widget.userType == "Seller") ...[
+                _buildMenuOption(Icons.track_changes, "Track Sales", () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SalesTrackingPage(
+                        sellerId: profileVM.user?.id ?? 0),
+                    ),
+                  );
+                }),
+              ],
               _buildMenuOption(Icons.settings, "Settings", () {}),
               _buildLogoutOption(context),
             ],
@@ -76,44 +116,52 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildProfileHeader(ProfileViewModel profileVM) {
-    if (profileVM.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  if (profileVM.isLoading) {
+    return const Center(child: CircularProgressIndicator());
+  }
 
-    final user = profileVM.user;
+  final user = profileVM.user;
+  final hasProfilePic = user?.profilePicture != null &&
+      user!.profilePicture!.isNotEmpty &&
+      user.profilePicture!.startsWith('http');
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        user?.profilePicture != null
-            ? CircleAvatar(
-                radius: 40,
-                backgroundImage: NetworkImage(user!.profilePicture!),  // Use the profile URL from backend
-              )
-            : const CircleAvatar(
-                radius: 40,
-                backgroundImage: AssetImage('assets/images/profile_pic.png'),
-              ),
-        const SizedBox(width: 15),
-        Column(
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      hasProfilePic
+          ? CircleAvatar(
+              radius: 40,
+              backgroundImage: NetworkImage(user.profilePicture!),
+            )
+          : const CircleAvatar(
+              radius: 40,
+              backgroundImage: AssetImage('assets/images/profile_pic.png'),
+            ),
+      const SizedBox(width: 15),
+      Expanded(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 const Text("Hi, ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(user?.name ?? "No data", 
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.color10)),
+                Flexible(
+                  child: Text(
+                    user?.name ?? "No data",
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.color10),
+                  ),
+                ),
               ],
             ),
             Text(user?.email ?? "No email", style: const TextStyle(fontSize: 14, color: Colors.grey)),
-            Text("Since ${user?.createdAtFormatted ?? "Unknown"}", 
-                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text("Since ${user?.createdAtFormatted ?? "Unknown"}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
+      ),
       ],
     );
   }
-
 
 
   Widget _buildMenuOption(IconData icon, String title, VoidCallback onTap) {
@@ -137,7 +185,6 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
 
   Widget _buildLogoutOption(BuildContext context) {
     return Card(

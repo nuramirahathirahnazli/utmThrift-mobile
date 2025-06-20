@@ -14,4 +14,5 @@ class AppColors {
   static const Color color10 = Color(0xFF000000); // Black
   static const Color color11 = Color(0xFFECd8DB); // Light Pink (64% opacity)
   static const Color color12 = Color(0xFFFFF6E0); // Light Yellow (64% opacity)
+  static const Color color13 = Color.fromARGB(189, 8, 131, 8); // Green (80% opacity)
 }

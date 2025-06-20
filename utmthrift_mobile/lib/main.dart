@@ -28,9 +28,9 @@ import 'views/seller/seller_add_item_page.dart';
 import 'views/seller/seller_my_items_page.dart';
 import 'views/items/item_list_cart_page.dart';
 import 'views/order/order_history_page.dart';
+import 'views/pages/profile_page.dart';
 
 import 'views/pages/home_screen.dart';
-import 'views/profile/profile_screen.dart';
 import 'views/auth/sign_up.dart';
 import 'views/auth/sign_in.dart';
 
@@ -99,7 +99,7 @@ class _MyAppState extends State<MyApp> {
           '/sign_up': (context) => SignUpScreen(),
           '/sign_in': (context) => SignInScreen(),
           '/seller_home': (context) => const SellerHomeScreen(),
-          '/profile': (context) => const ProfileScreen(),
+          '/profile': (context) => const ProfilePage(userType: '',),
           '/add_item': (context) => const AddItemScreen(),
           '/my_items': (context) => const MyItemsPage(),
           '/cartPage': (context) => const CartPage(),

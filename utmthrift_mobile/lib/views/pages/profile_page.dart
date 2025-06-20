@@ -1,5 +1,5 @@
 //profile page untuk buyer & seller
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -54,10 +54,21 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               _buildProfileHeader(profileVM),
               const SizedBox(height: 20),
-              _buildMenuOption(Icons.person, "Profile", () {
-                Navigator.push(
+              _buildMenuOption(Icons.person, "Profile", () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const EditProfilePage()),
+                );
+
+                // After coming back from EditProfilePage, refresh profile
+                Provider.of<ProfileViewModel>(context, listen: false).fetchUserProfile();
+                
+                // Show feedback to user
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Profile refreshed successfully!"),
+                    duration: Duration(seconds: 2),
+                  ),
                 );
               }),
               _buildMenuOption(Icons.favorite, "Liked", () {}),
@@ -105,49 +116,53 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildProfileHeader(ProfileViewModel profileVM) {
-    if (profileVM.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  if (profileVM.isLoading) {
+    return const Center(child: CircularProgressIndicator());
+  }
 
-    final user = profileVM.user;
+  final user = profileVM.user;
+  final hasProfilePic = user?.profilePicture != null &&
+      user!.profilePicture!.isNotEmpty &&
+      user.profilePicture!.startsWith('http');
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        user?.profilePicture != null
-            ? CircleAvatar(
-                radius: 40,
-                backgroundImage: NetworkImage(user!.profilePicture!),
-              )
-            : const CircleAvatar(
-                radius: 40,
-                backgroundImage: AssetImage('assets/images/profile_pic.png'),
-              ),
-        const SizedBox(width: 15),
-        Expanded( 
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Text("Hi, ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Flexible( // <-- Wrap the name to avoid long text overflow
-                    child: Text(
-                      user?.name ?? "No data",
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.color10),
-                    ),
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      hasProfilePic
+          ? CircleAvatar(
+              radius: 40,
+              backgroundImage: NetworkImage(user.profilePicture!),
+            )
+          : const CircleAvatar(
+              radius: 40,
+              backgroundImage: AssetImage('assets/images/profile_pic.png'),
+            ),
+      const SizedBox(width: 15),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text("Hi, ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Flexible(
+                  child: Text(
+                    user?.name ?? "No data",
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.color10),
                   ),
-                ],
-              ),
-              Text(user?.email ?? "No email", style: const TextStyle(fontSize: 14, color: Colors.grey)),
-              Text("Since ${user?.createdAtFormatted ?? "Unknown"}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
-            ],
-          ),
+                ),
+              ],
+            ),
+            Text(user?.email ?? "No email", style: const TextStyle(fontSize: 14, color: Colors.grey)),
+            Text("Since ${user?.createdAtFormatted ?? "Unknown"}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          ],
         ),
+      ),
       ],
     );
   }
+
 
   Widget _buildMenuOption(IconData icon, String title, VoidCallback onTap) {
     return Card(

@@ -197,9 +197,15 @@ Widget build(BuildContext context) {
                       onSearchSubmitted: _onSearchSubmitted,
                       cartCount: cartViewModel.itemCount,
                       chatCount: chatVM.unreadCount, 
-                      onCartPressed: () {
-                        Navigator.pushNamed(context, '/cartPage');
+                      onCartPressed: () async {
+                        await Navigator.pushNamed(context, '/cartPage');
+
+                        final userId = await AuthService.getCurrentUserId();
+                        if (userId != null) {
+                          Provider.of<CartViewModel>(context, listen: false).loadCartItems(userId);
+                        }
                       },
+
                     );
                   },
                 ),

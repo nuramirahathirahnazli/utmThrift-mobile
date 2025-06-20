@@ -44,6 +44,11 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     final viewModel = Provider.of<ItemViewModel>(context, listen: false);
     _itemFuture = viewModel.fetchItemDetails(widget.itemId);
     _cartViewModel = Provider.of<CartViewModel>(context, listen: false);
+    AuthService.getCurrentUserId().then((userId) {
+      if (userId != null) {
+        _cartViewModel.loadCartItems(userId); // 🔁 Refresh cart data
+      }
+    });
   }
 
   Future<void> _loadCurrentUserId() async {

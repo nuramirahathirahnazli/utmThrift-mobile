@@ -345,12 +345,20 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   }
 
   Widget _buildProductGrid() {
+    final currentUserId = context.read<UserViewModel>().userId;
+
     return Consumer<ItemViewModel>(
       builder: (context, vm, _) {
         if (vm.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (vm.latestItems.isEmpty) {
+
+        // Filter out items where the item's sellerId matches the current logged-in seller
+        final filteredItems = vm.latestItems
+            .where((item) => item.sellerId != currentUserId)
+            .toList();
+
+        if (filteredItems.isEmpty) {
           return const Center(child: Text("No items available"));
         }
 
@@ -363,19 +371,18 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             mainAxisSpacing: 10,
             childAspectRatio: 0.75,
           ),
-          itemCount: vm.latestItems.length,
+          itemCount: filteredItems.length,
           itemBuilder: (context, index) {
-            final item = vm.latestItems[index];
+            final item = filteredItems[index];
             return ItemCardExplore(
               imageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
               name: item.name,
               price: item.price,
-              condition: item.condition, 
+              condition: item.condition,
               seller: '', 
               itemId: item.id,
-              isFavorite: false, // placeholder, update with actual logic if needed
+              isFavorite: false,
               onFavoriteToggle: () {
-                // placeholder function, update with favorite toggle logic
                 print("Toggled favorite for item ${item.id}");
               },
             );
@@ -384,5 +391,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
       },
     );
   }
+
 }
 

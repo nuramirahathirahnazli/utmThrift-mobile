@@ -1,9 +1,12 @@
-// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:utmthrift_mobile/services/item_service.dart';
 import 'package:utmthrift_mobile/views/buyer/seller_application_page.dart';
 import 'package:utmthrift_mobile/views/order/order_history_page.dart';
+import 'package:utmthrift_mobile/views/pages/my_likes_page.dart';
 import 'package:utmthrift_mobile/views/profile/profile_edit.dart';
 import 'package:utmthrift_mobile/views/seller/seller_sales_tracking_page.dart';
 import 'package:utmthrift_mobile/views/seller/seller_upload_qrcode_page.dart';
@@ -22,11 +25,97 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final ItemService _itemService = ItemService();
   
+  DateTime? _lastFavoriteTap;
+  int? _userId;
+  Set<int> _favoriteItemIds = <int>{};
+
+  void _toggleFavorite(int itemId) async {
+    if (_userId == null) {
+      print('User not logged in, cannot toggle favorite.');
+      return;
+    }
+  
+    if (_lastFavoriteTap != null && DateTime.now().difference(_lastFavoriteTap!) < const Duration(milliseconds: 500)) {
+      return;
+    }
+    _lastFavoriteTap = DateTime.now();
+
+    setState(() {
+      if (_favoriteItemIds.contains(itemId)) {
+        _favoriteItemIds.remove(itemId);
+      } else {
+        _favoriteItemIds.add(itemId);
+      }
+    });
+
+    try {
+      await _itemService.addFavorite(_userId!, itemId);
+    } catch (e) {
+      // revert on failure
+      setState(() {
+        if (_favoriteItemIds.contains(itemId)) {
+          _favoriteItemIds.remove(itemId);
+        } else {
+          _favoriteItemIds.add(itemId);
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to update favorite. Please try again.')),
+    );
+    print('Error toggling favorite: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     Provider.of<ProfileViewModel>(context, listen: false).fetchUserProfile();
+    _initUserAndData();
+  }
+
+  Future<void> _initUserAndData() async {
+    _userId = await AuthService.getCurrentUserId();
+    if (_userId == null) {
+      // Handle user not logged in (optional)
+      print('No logged-in user found.');
+      return;
+    }
+    await _loadCachedFavorites();
+    await _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    if (_userId == null) return; // user not logged in
+    try {
+      final Set<int> favoriteIds = await _itemService.fetchFavoriteItemIds(_userId!);
+      if (mounted) {
+        setState(() {
+          _favoriteItemIds = favoriteIds;
+        });
+      }
+      _cacheFavorites();
+    } catch (e) {
+      print('Failed to load favorites: $e');
+    }
+  }
+
+  // Cache favorites locally (dummy implementation, replace with actual caching if needed)
+  Future<void> _cacheFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      'favorites', 
+      _favoriteItemIds.map((id) => id.toString()).toList(),
+    );
+  }
+  
+  Future<void> _loadCachedFavorites() async {
+   final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getStringList('favorites') ?? [];
+    setState(() {
+      _favoriteItemIds = cached.map((id) => int.parse(id)).toSet();
+    });
   }
 
   @override
@@ -73,7 +162,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 );
               }),
-              _buildMenuOption(Icons.favorite_border, "Liked", () {}),
+              _buildMenuOption(Icons.favorite_border, "Liked", () {Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => MyLikesPage(
+                    userId: _userId!,
+                    favoriteItemIds: _favoriteItemIds,
+                    onFavoriteToggle: _toggleFavorite,
+                  )),
+                );
+              }),
               _buildMenuOption(Icons.shopping_bag_outlined, "My Purchases", () {
                 Navigator.push(
                   context, 

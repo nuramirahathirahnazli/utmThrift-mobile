@@ -203,7 +203,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   );
                 }),
               ],
-              _buildMenuOption(Icons.settings_outlined, "Settings", () {}),
+            
               const SizedBox(height: 16),
               _buildLogoutOption(context),
             ],

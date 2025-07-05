@@ -13,25 +13,33 @@ class SellerReviewProfilePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.base,
       appBar: AppBar(
-        title: const Text('Seller Profile', style: TextStyle(color: AppColors.color10)),
-        backgroundColor: AppColors.color1,
-        iconTheme: const IconThemeData(color: AppColors.color10),
+        title: const Text(
+          'Seller Profile',
+          style: TextStyle(
+            color: AppColors.base,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: AppColors.color2, // Maroon app bar
+        iconTheme: const IconThemeData(color: AppColors.base),
+        elevation: 0,
       ),
       body: FutureBuilder<SellerReviewProfileData>(
         future: SellerService.getSellerProfile(sellerId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.color1,
-              ),
+              child: CircularProgressIndicator(color: AppColors.color2),
             );
           }
           if (snapshot.hasError) {
-            return Center(
+            return const Center(
               child: Text(
-                "Error: ${snapshot.error}",
-                style: const TextStyle(color: AppColors.color8),
+                "Error loading profile",
+                style: TextStyle(
+                  color: AppColors.color8, // Red error text
+                  fontSize: 16,
+                ),
               ),
             );
           }
@@ -40,151 +48,244 @@ class SellerReviewProfilePage extends StatelessWidget {
           final reviews = data.reviews;
           final seller = data.seller;
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ⭐ Average Rating
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.color12,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                // Seller Rating Card
+                Card(
+                  color: AppColors.color12, // Light yellow background
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star, color: AppColors.color1),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Average Rating: ${data.averageRating.toStringAsFixed(1)}",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.color10,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.color2.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.star_rounded,
+                            color: AppColors.color1, // Orange star
+                            size: 30,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // 🧾 Seller Info
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.color11,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildInfoRow(Icons.store, "Store Name: ${seller.storeName ?? 'Not provided'}"),
-                      const Divider(height: 16, color: AppColors.color3),
-                      _buildInfoRow(Icons.person, "Name: ${seller.name ?? 'Not provided'}"),
-                      const Divider(height: 16, color: AppColors.color3),
-                      _buildInfoRow(Icons.phone, "Contact: ${seller.contact ?? 'Not provided'}"),
-                      const Divider(height: 16, color: AppColors.color3),
-                      _buildInfoRow(Icons.work, "Role: ${seller.userRole ?? 'Not provided'}"),
-                      const Divider(height: 16, color: AppColors.color3),
-                      _buildInfoRow(Icons.school, "Faculty: ${seller.faculty ?? 'Not provided'}"),
-                      const Divider(height: 16, color: AppColors.color3),
-                      _buildInfoRow(Icons.location_on, "Location: ${seller.location ?? 'Not provided'}"),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // 🗨️ Reviews
-                const Padding(
-                  padding: EdgeInsets.only(left: 8.0),
-                  child: Text(
-                    "Buyer Reviews:",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.color2,
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Average Rating",
+                              style: TextStyle(
+                                color: AppColors.color10.withOpacity(0.8),
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              data.averageRating.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.color2, // Maroon text
+                              ),
+                            ),
+                            Text(
+                              "${reviews.length} ${reviews.length == 1 ? 'review' : 'reviews'}",
+                              style: TextStyle(
+                                color: AppColors.color10.withOpacity(0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const Divider(color: AppColors.color3, thickness: 1),
+                const SizedBox(height: 20),
 
-                Expanded(
-                  child: reviews.isEmpty
-                      ? Center(
-                          child: Text(
-                            "No reviews yet.",
+                // Seller Information Card
+                Card(
+                  color: AppColors.color12, // Light yellow background
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        _buildInfoRow(
+                          icon: Icons.store_outlined,
+                          label: "Store Name",
+                          value: seller.storeName ?? 'Not provided',
+                        ),
+                        const Divider(height: 20, color: AppColors.color3),
+                        _buildInfoRow(
+                          icon: Icons.person_outline,
+                          label: "Seller Name",
+                          value: seller.name ?? 'Not provided',
+                        ),
+                        const Divider(height: 20, color: AppColors.color3),
+                        _buildInfoRow(
+                          icon: Icons.phone_outlined,
+                          label: "Contact",
+                          value: seller.contact ?? 'Not provided',
+                        ),
+                        const Divider(height: 20, color: AppColors.color3),
+                        _buildInfoRow(
+                          icon: Icons.work_outline,
+                          label: "Role",
+                          value: seller.userRole ?? 'Not provided',
+                        ),
+                        const Divider(height: 20, color: AppColors.color3),
+                        _buildInfoRow(
+                          icon: Icons.school_outlined,
+                          label: "Faculty",
+                          value: seller.faculty ?? 'Not provided',
+                        ),
+                        const Divider(height: 20, color: AppColors.color3),
+                        _buildInfoRow(
+                          icon: Icons.location_on_outlined,
+                          label: "Location",
+                          value: seller.location ?? 'Not provided',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Reviews Section
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    "Buyer Reviews",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.color2, // Maroon text
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Divider(
+                  color: AppColors.color3.withOpacity(0.5),
+                  thickness: 1,
+                ),
+                const SizedBox(height: 8),
+
+                // Reviews List
+                if (reviews.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.reviews_outlined,
+                            size: 50,
+                            color: AppColors.color3, // Light pink icon
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "No reviews yet",
                             style: TextStyle(
                               color: AppColors.color10.withOpacity(0.6),
                               fontSize: 16,
                             ),
                           ),
-                        )
-                      : ListView.builder(
-                          itemCount: reviews.length,
-                          itemBuilder: (context, i) {
-                            final r = reviews[i];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              elevation: 2,
-                              color: AppColors.color5,
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: AppColors.color2,
-                                  child: Text(
-                                    r.buyerName?[0] ?? '?',
-                                    style: const TextStyle(color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ListView.separated(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: reviews.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final review = reviews[index];
+                      return Card(
+                        color: AppColors.color11, // Light pink background
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: AppColors.color2, // Maroon
+                                    child: Text(
+                                      review.buyerName?[0] ?? '?',
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
                                   ),
-                                ),
-                                title: Text(
-                                  r.buyerName ?? 'User #${r.buyerId}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.color10,
-                                  ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.star, size: 16, color: AppColors.color1),
                                         Text(
-                                          " ${r.rating}",
-                                          style: const TextStyle(color: AppColors.color10),
+                                          review.buyerName ?? 'User #${review.buyerId}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.color10,
+                                          ),
+                                        ),
+                                        Text(
+                                          review.createdAt.split(' ')[0],
+                                          style: TextStyle(
+                                            color: AppColors.color10.withOpacity(0.6),
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      r.comment ?? "No comment",
-                                      style: const TextStyle(color: AppColors.color10),
-                                    ),
-                                  ],
-                                ),
-                                trailing: Text(
-                                  r.createdAt.split(' ')[0],
-                                  style: TextStyle(
-                                    color: AppColors.color10.withOpacity(0.7),
-                                    fontSize: 12,
                                   ),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        size: 16,
+                                        color: AppColors.color1, // Orange star
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        review.rating.toString(),
+                                        style: const TextStyle(
+                                          color: AppColors.color10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                review.comment ?? "No comment provided",
+                                style: TextStyle(
+                                  color: AppColors.color10.withOpacity(0.8),
                                 ),
                               ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
-                ),
+                      );
+                    },
+                  ),
               ],
             ),
           );
@@ -193,15 +294,40 @@ class SellerReviewProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: AppColors.color2),
+        Icon(
+          icon,
+          size: 20,
+          color: AppColors.color2, // Maroon icon
+        ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(color: AppColors.color10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.color10.withOpacity(0.6),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.color10,
+                ),
+              ),
+            ],
           ),
         ),
       ],

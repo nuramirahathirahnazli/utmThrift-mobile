@@ -163,7 +163,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> with RouteAware {
                       order.alreadyReviewed ? Colors.grey : Colors.orange,
                 ),
                 child: Text(
-                  order.alreadyReviewed ? 'Review Submitted' : 'Leave a Review',
+                  order.alreadyReviewed ? 'Rate Submitted' : 'Rate',
                 ),
               ),
           ],

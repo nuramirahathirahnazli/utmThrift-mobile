@@ -106,7 +106,6 @@ class ItemViewModel extends ChangeNotifier {
     }
   }
 
-
   /// Toggle favorite status for an item
   Future<void> toggleFavorite(int itemId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -131,8 +130,6 @@ class ItemViewModel extends ChangeNotifier {
 
     notifyListeners();
   }
-
-
 
   /// Add a new item
   Future<Item?> addItem({

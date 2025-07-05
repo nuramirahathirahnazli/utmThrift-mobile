@@ -1,8 +1,7 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/viewmodels/chatmessage_viewmodel.dart';
+import 'package:utmthrift_mobile/views/shared/colors.dart';
 
 class ChatScreen extends StatefulWidget {
   final int sellerId;
@@ -34,30 +33,27 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
-
   late ChatMessageViewModel _viewModel;
   late TextEditingController _messageController;
-
   bool _canSend = false;
-
 
   @override
   void initState() {
     super.initState();
-
     _messageController = TextEditingController(text: widget.initialMessage ?? '');
+    _messageController.addListener(_updateSendButtonState);
+    _initializeChat();
+  }
 
-    _messageController.addListener(() {
-      final canSendNow = _messageController.text.trim().isNotEmpty;
-      if (canSendNow != _canSend) {
-        setState(() {
-          _canSend = canSendNow;
-        });
-      }
-    });
+  void _updateSendButtonState() {
+    final canSendNow = _messageController.text.trim().isNotEmpty;
+    if (canSendNow != _canSend) {
+      setState(() => _canSend = canSendNow);
+    }
+  }
 
+  void _initializeChat() {
     _viewModel = ChatMessageViewModel();
-
     _viewModel.initialize(
       currentUserId: widget.currentUserId,
       sellerId: widget.sellerId,
@@ -71,28 +67,29 @@ class _ChatScreenState extends State<ChatScreen> {
         userType: widget.isSeller ? 'seller' : 'buyer',
         itemId: widget.itemId ?? 0,
       );
-
       _scrollToBottom();
-
-      final shouldSendInitialMessage = (widget.initialMessage?.trim().isNotEmpty ?? false);
-      final isBuyer = !widget.isSeller;
-      final isMeetUp = widget.paymentMethod == "Meet with Seller";
-
-      final lastMessage = _viewModel.messages.isNotEmpty ? _viewModel.messages.last : null;
-      final lastMessageFromBuyer = lastMessage?.senderId == widget.currentUserId;
-
-      if (shouldSendInitialMessage && isBuyer && isMeetUp && lastMessageFromBuyer) {
-        // Send initial message only if it’s not already in the messages
-        if (!_viewModel.messages.any((m) => m.message == widget.initialMessage!.trim())) {
-          await sendMessage(widget.initialMessage!.trim());
-          await Future.delayed(const Duration(seconds: 1));
-        }
-
-        if (!_viewModel.hasAutoReplyBeenSent("Please state the place to meet")) {
-          await _viewModel.sendAutoReplyFromSeller("Please state the place to meet");
-        }
-      }
+      await _handleInitialMessage();
     });
+  }
+
+  Future<void> _handleInitialMessage() async {
+    final shouldSendInitialMessage = (widget.initialMessage?.trim().isNotEmpty ?? false);
+    final isBuyer = !widget.isSeller;
+    final isMeetUp = widget.paymentMethod == "Meet with Seller";
+
+    final lastMessage = _viewModel.messages.isNotEmpty ? _viewModel.messages.last : null;
+    final lastMessageFromBuyer = lastMessage?.senderId == widget.currentUserId;
+
+    if (shouldSendInitialMessage && isBuyer && isMeetUp && lastMessageFromBuyer) {
+      if (!_viewModel.messages.any((m) => m.message == widget.initialMessage!.trim())) {
+        await sendMessage(widget.initialMessage!.trim());
+        await Future.delayed(const Duration(seconds: 1));
+      }
+
+      if (!_viewModel.hasAutoReplyBeenSent("Please state the place to meet")) {
+        await _viewModel.sendAutoReplyFromSeller("Please state the place to meet");
+      }
+    }
   }
 
   Future<void> sendMessage(String text) async {
@@ -104,10 +101,12 @@ class _ChatScreenState extends State<ChatScreen> {
       _messageController.clear();
       _scrollToBottom();
     } catch (e) {
-      print('Failed to send message: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to send message. Please try again.')),
+          const SnackBar(
+            content: Text('Failed to send message. Please try again.'),
+            backgroundColor: AppColors.color8, // Red error
+          ),
         );
       }
     }
@@ -142,126 +141,170 @@ class _ChatScreenState extends State<ChatScreen> {
     return ChangeNotifierProvider.value(
       value: _viewModel,
       child: Scaffold(
+        backgroundColor: AppColors.base,
         appBar: AppBar(
+          backgroundColor: AppColors.color2, // Maroon app bar
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pop(context, true); // Trigger refresh on return
-            },
+            icon: const Icon(Icons.arrow_back, color: AppColors.base),
+            onPressed: () => Navigator.pop(context, true),
           ),
-          title: Text("Chat with ${widget.sellerName}"),
+          title: Text(
+            widget.sellerName,
+            style: const TextStyle(
+              color: AppColors.base,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.home),
+              icon: const Icon(Icons.home, color: AppColors.base),
               tooltip: 'Go to Home',
-              onPressed: () {
-                if (widget.isSeller) {
-                  Navigator.of(context).pushNamedAndRemoveUntil('/seller_home', (route) => false);
-                } else {
-                  Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
-                }
-              },
+              onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                widget.isSeller ? '/seller_home' : '/home',
+                (route) => false,
+              ),
             ),
           ],
         ),
         body: Consumer<ChatMessageViewModel>(
           builder: (context, vm, _) {
             if (vm.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.color2),
+              );
             }
 
             return Column(
               children: [
                 Expanded(
-                  child: ListView.builder(
-                    reverse: true,
-                    controller: _scrollController,
-                    itemCount: vm.messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = vm.messages[vm.messages.length - 1 - index];
-                      final isMe = msg.senderId == widget.currentUserId;
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/chat_bg.png'), // Add your own subtle pattern
+                        fit: BoxFit.cover,
+                        opacity: 0.05,
+                      ),
+                    ),
+                    child: ListView.builder(
+                      reverse: true,
+                      controller: _scrollController,
+                      itemCount: vm.messages.length,
+                      padding: const EdgeInsets.all(16),
+                      itemBuilder: (context, index) {
+                        final msg = vm.messages[vm.messages.length - 1 - index];
+                        final isMe = msg.senderId == widget.currentUserId;
 
-                      return Align(
-                        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                          padding: const EdgeInsets.all(12),
-                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-                          decoration: BoxDecoration(
-                            color: isMe
-                                ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                : Colors.grey[200],
-                            borderRadius: _messageBorderRadius(isMe),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                            children: [
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isMe
+                                        ? AppColors.color2 // Maroon for sender
+                                        : AppColors.color12, // Light yellow for receiver
+                                    borderRadius: _messageBorderRadius(isMe),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    msg.message,
+                                    style: TextStyle(
+                                      color: isMe ? AppColors.base : AppColors.color10,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Text(msg.message),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
 
-                // Confirm Meeting Place Button (Seller)
-                if (widget.isSeller &&
-                    _viewModel.hasMeetingPlaceBeenStated() &&
-                    !_viewModel.hasConfirmedMeetPlace)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.check_circle),
-                      label: const Text("Confirm Meeting Place"),
-                      onPressed: () async {
-                        await _viewModel.confirmMeetingPlace();
-                        setState(() {});
-                      },
-                    ),
+                // Action Buttons
+                if (widget.isSeller && _viewModel.hasMeetingPlaceBeenStated() && !_viewModel.hasConfirmedMeetPlace)
+                  _buildActionButton(
+                    icon: Icons.check_circle,
+                    label: "Confirm Meeting Place",
+                    onPressed: () async {
+                      await _viewModel.confirmMeetingPlace();
+                      setState(() {});
+                    },
                   ),
 
-                // Mark Item as Sold Button (Seller)
-                if (_viewModel.hasConfirmedMeetPlace &&
-                    !_viewModel.isItemMarkedSold)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.shopping_bag),
-                      label: const Text("Mark Item as Sold"),
-                      onPressed: () async {
+                if (_viewModel.hasConfirmedMeetPlace && !_viewModel.isItemMarkedSold)
+                  _buildActionButton(
+                    icon: Icons.shopping_bag,
+                    label: "Mark Item as Sold",
+                    onPressed: () async {
+                      if (widget.itemId != null) {
                         await _viewModel.markItemAsSold(widget.itemId!);
                         setState(() {});
-                      },
-                    ),
+                      }
+                    },
                   ),
 
-                // Chat input
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
+                // Message Input
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.base,
+                    border: Border(
+                      top: BorderSide(
+                        color: AppColors.color3.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                  ),
                   child: Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: _messageController,
-                          keyboardType: TextInputType.text,
-                          decoration: InputDecoration(
-                            hintText: 'Type a message...',
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            filled: true,
-                            fillColor: Colors.grey[100],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide.none,
-                            ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.color12, // Light yellow
+                            borderRadius: BorderRadius.circular(24),
                           ),
-                          onSubmitted: _canSend ? sendMessage : null,
+                          child: TextField(
+                            controller: _messageController,
+                            keyboardType: TextInputType.multiline,
+                            maxLines: 3,
+                            minLines: 1,
+                            decoration: InputDecoration(
+                              hintText: 'Type a message...',
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              border: InputBorder.none,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  Icons.send,
+                                  color: _canSend ? AppColors.color2 : AppColors.color3,
+                                ),
+                                onPressed: _canSend
+                                    ? () => sendMessage(_messageController.text)
+                                    : null,
+                              ),
+                            ),
+                            onSubmitted: _canSend ? sendMessage : null,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        color: _canSend ? Theme.of(context).primaryColor : Colors.grey,
-                        onPressed: _canSend
-                            ? () {
-                                sendMessage(_messageController.text);
-                              }
-                            : null,
                       ),
                     ],
                   ),
@@ -269,6 +312,31 @@ class _ChatScreenState extends State<ChatScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          icon: Icon(icon, color: AppColors.base),
+          label: Text(label),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.color2, // Maroon
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: onPressed,
         ),
       ),
     );

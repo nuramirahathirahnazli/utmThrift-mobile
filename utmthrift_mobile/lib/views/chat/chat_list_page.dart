@@ -73,13 +73,14 @@ class _ChatListPageState extends State<ChatListPage> {
     return Scaffold(
       backgroundColor: AppColors.base,
       appBar: AppBar(
-        title: Text(
-          isSeller ? "My Chats" : "Chat with Sellers",
-          style: const TextStyle(
+        title: const Text(
+          "My Chats",
+          style: TextStyle(
             color: AppColors.base,
             fontWeight: FontWeight.bold,
           ),
         ),
+
         backgroundColor: AppColors.color2, // Maroon app bar
         iconTheme: const IconThemeData(color: AppColors.base),
         elevation: 0,
@@ -119,13 +120,12 @@ class _ChatListPageState extends State<ChatListPage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            isSeller 
-                                ? "When buyers message you, chats will appear here"
-                                : "Start a chat with a seller",
+                            "Start a conversation and your chats will appear here",
                             style: TextStyle(
                               color: AppColors.color10.withOpacity(0.6),
                             ),
                           ),
+
                         ],
                       ),
                     )

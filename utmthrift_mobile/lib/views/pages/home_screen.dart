@@ -28,7 +28,6 @@ import 'package:utmthrift_mobile/views/pages/profile_page.dart';
 
 import 'package:utmthrift_mobile/views/shared/bottom_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
-import 'package:utmthrift_mobile/views/shared/hamburger_menu.dart';
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -180,12 +179,7 @@ Widget build(BuildContext context) {
     builder: (context, chatVM, child) {
       return Scaffold(
         resizeToAvoidBottomInset: false,
-        drawer: HamburgerMenu(
-          userType: userType,
-          onLogout: () {
-            Navigator.pushReplacementNamed(context, '/login');
-          },
-        ),
+        
         backgroundColor: AppColors.base,
         appBar: _selectedIndex == 0
             ? PreferredSize(

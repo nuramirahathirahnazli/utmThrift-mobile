@@ -31,7 +31,6 @@ import 'package:utmthrift_mobile/views/seller/seller_my_items_page.dart';
 //shared folder
 import 'package:utmthrift_mobile/views/shared/bottom_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
-import 'package:utmthrift_mobile/views/shared/hamburger_menu.dart';
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 
 class SellerHomeScreen extends StatefulWidget {
@@ -97,12 +96,6 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      drawer: HamburgerMenu(
-        userType: 'Seller', // or pass dynamically
-        onLogout: () {
-          Navigator.pushReplacementNamed(context, '/login');
-        },
-      ),
       backgroundColor: AppColors.base,
       appBar: _selectedIndex == 0 
       ? TopNavBar(

@@ -125,12 +125,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: AppColors.base,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: AppColors.color2, // Using maroon color
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: AppColors.base),
-          onPressed: () {},
-        ),
         title: const Text("My Profile", 
                style: TextStyle(
                  fontSize: 18, 

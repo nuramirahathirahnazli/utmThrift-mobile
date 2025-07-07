@@ -1,8 +1,7 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print, unnecessary_nullable_for_final_variable_declarations, library_private_types_in_public_api, unnecessary_import
+// ignore_for_file: use_build_context_synchronously, unnecessary_nullable_for_final_variable_declarations, library_private_types_in_public_api
 
 import 'dart:convert';
 import 'dart:io' as io;
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:utmthrift_mobile/views/seller/seller_item_details_page.dart';
+import 'package:utmthrift_mobile/views/shared/colors.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -21,19 +21,17 @@ class AddItemScreen extends StatefulWidget {
 
 class _AddItemScreenState extends State<AddItemScreen> {
   final _formKey = GlobalKey<FormState>();
-
+  final _picker = ImagePicker();
+  
   String productName = '';
   String category = '';
   String description = '';
   double price = 0.0;
   String condition = 'Brand New';
-
-  final ImagePicker _picker = ImagePicker();
   List<XFile> selectedImages = [];
-
   bool isSubmitting = false;
 
-  @override
+ @override
   void initState() {
     super.initState();
     Future.microtask(() {
@@ -46,30 +44,23 @@ class _AddItemScreenState extends State<AddItemScreen> {
     if (images != null) {
       if ((selectedImages.length + images.length) > 5) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You can only select up to 5 images.')),
+          const SnackBar(content: Text('Maximum 5 images allowed')),
         );
         return;
       }
-      setState(() {
-        selectedImages.addAll(images);
-      });
+      setState(() => selectedImages.addAll(images));
     }
   }
 
- /// Store images differently for web and mobile
   Future<List<String>> storeImages() async {
     List<String> imagePaths = [];
 
     if (kIsWeb) {
-      // On Web, we send image bytes, so no need to save files locally.
-      // Just encode bytes as base64 string (or pass bytes separately)
-      // Here we just prepare the base64 strings for demonstration if needed
       for (var image in selectedImages) {
         final bytes = await image.readAsBytes();
         imagePaths.add(base64Encode(bytes));
       }
     } else {
-      // On Mobile, save image files locally and return their paths
       final directory = await getApplicationDocumentsDirectory();
       for (var image in selectedImages) {
         try {
@@ -80,7 +71,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           await localImage.writeAsBytes(await image.readAsBytes());
           imagePaths.add(localImagePath);
         } catch (e) {
-          print('Error saving image: $e');
+          debugPrint('Error saving image: $e');
         }
       }
     }
@@ -88,11 +79,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
     return imagePaths;
   }
 
-
   void removeImage(int index) {
-    setState(() {
-      selectedImages.removeAt(index);
-    });
+    setState(() => selectedImages.removeAt(index));
   }
 
   Future<void> submitForm() async {
@@ -107,13 +95,11 @@ class _AddItemScreenState extends State<AddItemScreen> {
         throw Exception('At least one image is required');
       }
 
-      // For web, we prepare image bytes
       List<Uint8List>? imageBytes;
       if (kIsWeb) {
         imageBytes = [];
         for (var image in selectedImages) {
-          final bytes = await image.readAsBytes();
-          imageBytes.add(bytes);
+          imageBytes.add(await image.readAsBytes());
         }
       }
 
@@ -124,8 +110,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
         description: description,
         price: price,
         condition: condition,
-        imagePaths: kIsWeb ? null : imagePaths,  // pass null for web
-        imageBytes: kIsWeb ? imageBytes : null,   // pass bytes only for web
+        imagePaths: kIsWeb ? null : imagePaths,
+        imageBytes: kIsWeb ? imageBytes : null,
       );
 
       if (addedItem?.id != null) {
@@ -146,158 +132,64 @@ class _AddItemScreenState extends State<AddItemScreen> {
       setState(() => isSubmitting = false);
     }
   }
-
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.base,
       appBar: AppBar(
-        title: const Text('Add New Item'),
-        elevation: 0,),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        title: const Text(
+          'Add New Item',
+          style: TextStyle(
+            color: AppColors.base,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: AppColors.color2,
+        iconTheme: const IconThemeData(color: AppColors.base),
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Consumer<ItemViewModel>(
             builder: (context, model, _) {
               if (model.isLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.color2),
+                );
               }
 
               if (model.errorMessage.isNotEmpty) {
-                return Center(child: Text('Error: ${model.errorMessage}'));
+                return Center(
+                  child: Text(
+                    'Error: ${model.errorMessage}',
+                    style: const TextStyle(
+                      color: AppColors.color8,
+                      fontSize: 16,
+                    ),
+                  ),
+                );
               }
 
-              final categories = model.categories;
-
-              return ListView(
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: 'Product Name'),
-                    onSaved: (value) => productName = value ?? '',
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Please enter a product name' : null,
-                  ),
-                  DropdownButtonFormField<String>(
-                    items: categories.map<DropdownMenuItem<String>>((category) {
-                      return DropdownMenuItem<String>(
-                        value: category['id'].toString(),
-                        child: Text(category['name']),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        category = value!;
-                      });
-                    },
-                    hint: const Text('Select a category'),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Please select a category' : null,
-                  ),
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: 'Description'),
-                    onSaved: (value) => description = value ?? '',
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Please enter a description' : null,
-                  ),
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: 'Price'),
-                    keyboardType: TextInputType.number,
-                    onSaved: (value) => price = double.tryParse(value ?? '') ?? 0.0,
-                    validator: (value) {
-                      final priceValue = double.tryParse(value ?? '');
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a price';
-                      } else if (priceValue == null) {
-                        return 'Enter a valid number';
-                      }
-                      return null;
-                    },
-                  ),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Condition'),
-                    value: condition,
-                    onChanged: (value) => setState(() => condition = value ?? 'Brand New'),
-                    items: [
-                      'Brand New',
-                      'Like New',
-                      'Lightly Used',
-                      'Well Used',
-                      'Heavily Used'
-                    ]
-                        .map((cond) => DropdownMenuItem(
-                              value: cond,
-                              child: Text(cond),
-                            ))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text("Images (max 5):"),
-                  ElevatedButton.icon(
-                    onPressed: pickImages,
-                    icon: const Icon(Icons.add_a_photo),
-                    label: const Text("Add Images"),
-                  ),
-                  const SizedBox(height: 10),
-                  if (selectedImages.isNotEmpty)
-                    SizedBox(
-                      height: 100,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: selectedImages.length,
-                        itemBuilder: (context, index) {
-                          return Stack(
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                child: kIsWeb
-                                    ? FutureBuilder<Uint8List>(
-                                        future: selectedImages[index].readAsBytes(),
-                                        builder: (context, snapshot) {
-                                          if (!snapshot.hasData) {
-                                            return const Center(
-                                                child: CircularProgressIndicator());
-                                          }
-                                          return Image.memory(
-                                            snapshot.data!,
-                                            width: 100,
-                                            height: 100,
-                                            fit: BoxFit.cover,
-                                          );
-                                        },
-                                      )
-                                    : Image.file(
-                                        io.File(selectedImages[index].path),
-                                        width: 100,
-                                        height: 100,
-                                        fit: BoxFit.cover,
-                                      ),
-                              ),
-                              Positioned(
-                                top: 0,
-                                right: 0,
-                                child: GestureDetector(
-                                  onTap: () => removeImage(index),
-                                  child: const CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: Colors.red,
-                                    child: Icon(Icons.close,
-                                        size: 16, color: Colors.white),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: isSubmitting ? null : submitForm,
-                    child: isSubmitting
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Sell This Item'),
-                  ),
+                  _buildProductNameField(),
+                  const SizedBox(height: 16),
+                  _buildCategoryDropdown(model.categories),
+                  const SizedBox(height: 16),
+                  _buildDescriptionField(),
+                  const SizedBox(height: 16),
+                  _buildPriceField(),
+                  const SizedBox(height: 16),
+                  _buildConditionDropdown(),
+                  const SizedBox(height: 24),
+                  _buildImageSection(),
+                  const SizedBox(height: 24),
+                  _buildSubmitButton(),
                 ],
               );
             },
@@ -306,5 +198,302 @@ class _AddItemScreenState extends State<AddItemScreen> {
       ),
     );
   }
-}
 
+  Widget _buildProductNameField() {
+    return TextFormField(
+      decoration: InputDecoration(
+        labelText: 'Product Name',
+        labelStyle: TextStyle(color: AppColors.color10.withOpacity(0.8)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: AppColors.color2.withOpacity(0.5)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2, width: 2),
+        ),
+        prefixIcon: const Icon(Icons.shopping_bag, color: AppColors.color2),
+      ),
+      style: const TextStyle(color: AppColors.color10),
+      onSaved: (value) => productName = value ?? '',
+      validator: (value) => value == null || value.isEmpty 
+          ? 'Please enter a product name' 
+          : null,
+    );
+  }
+
+  Widget _buildCategoryDropdown(List<dynamic> categories) {
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: 'Category',
+        labelStyle: TextStyle(color: AppColors.color10.withOpacity(0.8)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: AppColors.color2.withOpacity(0.5)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2, width: 2),
+        ),
+        prefixIcon: const Icon(Icons.category, color: AppColors.color2),
+      ),
+      dropdownColor: AppColors.base,
+      style: const TextStyle(color: AppColors.color10),
+      items: categories.map<DropdownMenuItem<String>>((category) {
+        return DropdownMenuItem<String>(
+          value: category['id'].toString(),
+          child: Text(
+            category['name'],
+            style: const TextStyle(color: AppColors.color10),
+          ),
+        );
+      }).toList(),
+      onChanged: (value) => setState(() => category = value!),
+      hint: Text(
+        'Select a category',
+        style: TextStyle(color: AppColors.color10.withOpacity(0.5)),
+      ),
+      validator: (value) => value == null || value.isEmpty 
+          ? 'Please select a category' 
+          : null,
+    );
+  }
+
+  Widget _buildDescriptionField() {
+    return TextFormField(
+      decoration: InputDecoration(
+        labelText: 'Description',
+        labelStyle: TextStyle(color: AppColors.color10.withOpacity(0.8)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: AppColors.color2.withOpacity(0.5)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2, width: 2),
+        ),
+        prefixIcon: const Icon(Icons.description, color: AppColors.color2),
+      ),
+      style: const TextStyle(color: AppColors.color10),
+      maxLines: 3,
+      onSaved: (value) => description = value ?? '',
+      validator: (value) => value == null || value.isEmpty 
+          ? 'Please enter a description' 
+          : null,
+    );
+  }
+
+  Widget _buildPriceField() {
+    return TextFormField(
+      decoration: InputDecoration(
+        labelText: 'Price',
+        labelStyle: TextStyle(color: AppColors.color10.withOpacity(0.8)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: AppColors.color2.withOpacity(0.5)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2, width: 2),
+        ),
+        prefixIcon: const Icon(Icons.attach_money, color: AppColors.color2),
+      ),
+      style: const TextStyle(color: AppColors.color10),
+      keyboardType: TextInputType.number,
+      onSaved: (value) => price = double.tryParse(value ?? '') ?? 0.0,
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'Please enter a price';
+        if (double.tryParse(value) == null) return 'Enter a valid number';
+        return null;
+      },
+    );
+  }
+
+  Widget _buildConditionDropdown() {
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: 'Condition',
+        labelStyle: TextStyle(color: AppColors.color10.withOpacity(0.8)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: AppColors.color2.withOpacity(0.5)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.color2, width: 2),
+        ),
+        prefixIcon: const Icon(Icons.construction, color: AppColors.color2),
+      ),
+      dropdownColor: AppColors.base,
+      style: const TextStyle(color: AppColors.color10),
+      value: condition,
+      onChanged: (value) => setState(() => condition = value ?? 'Brand New'),
+      items: [
+        'Brand New',
+        'Like New',
+        'Lightly Used',
+        'Well Used',
+        'Heavily Used'
+      ].map((cond) => DropdownMenuItem(
+        value: cond,
+        child: Text(
+          cond,
+          style: const TextStyle(color: AppColors.color10),
+        ),
+      )).toList(),
+    );
+  }
+
+  Widget _buildImageSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Images (max 5)',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.color2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton.icon(
+          onPressed: pickImages,
+          icon: const Icon(Icons.add_a_photo, color: AppColors.base),
+          label: const Text(
+            "Add Images",
+            style: TextStyle(color: AppColors.base),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.color2,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (selectedImages.isNotEmpty)
+          SizedBox(
+            height: 120,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: selectedImages.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.color12,
+                        ),
+                        child: kIsWeb
+                            ? FutureBuilder<Uint8List>(
+                                future: selectedImages[index].readAsBytes(),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData) {
+                                    return const Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.color2),
+                                    );
+                                  }
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.memory(
+                                      snapshot.data!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  );
+                                },
+                              )
+                            : ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.file(
+                                  io.File(selectedImages[index].path),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                      ),
+                      Positioned(
+                        top: 5,
+                        right: 5,
+                        child: GestureDetector(
+                          onTap: () => removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.color8,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return ElevatedButton(
+      onPressed: isSubmitting ? null : submitForm,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.color2,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      child: isSubmitting
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Text(
+              'Sell This Item',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.base,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+    );
+  }
+}

@@ -149,6 +149,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
         backgroundColor: AppColors.color2,
         iconTheme: const IconThemeData(color: AppColors.base),
         elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

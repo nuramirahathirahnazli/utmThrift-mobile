@@ -364,6 +364,7 @@ class ItemService {
     required String condition,
     required int categoryId,
     List<XFile>? images,
+    List<String>? existingImageUrls, 
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -378,6 +379,13 @@ class ItemService {
       ..fields['price'] = price.toString()
       ..fields['condition'] = condition
       ..fields['category_id'] = categoryId.toString();
+
+    if (existingImageUrls != null) {
+      for (var url in existingImageUrls) {
+        request.fields['existing_images[]'] = url; // ✅ Laravel expects array format
+      }
+    }
+
 
     if (images != null) {
       if (kIsWeb) {

@@ -198,7 +198,8 @@ class ItemViewModel extends ChangeNotifier {
     required double price,
     required String condition,
     required int categoryId,
-    List<XFile>? images,
+    List<XFile>? images,  // New images (picked now)
+    List<String> existingImages = const [], // Existing image URLs
   }) async {
     isLoading = true;
     notifyListeners();
@@ -212,6 +213,7 @@ class ItemViewModel extends ChangeNotifier {
         condition: condition,
         categoryId: categoryId,
         images: images,
+        existingImageUrls: existingImages,
       );
       return success;
     } catch (e) {

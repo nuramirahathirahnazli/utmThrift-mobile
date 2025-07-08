@@ -479,27 +479,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   },
                 ),
                 const SizedBox(width: 8),
-
-                // Buy Button
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/payment');
-                    },
-                    icon: const Icon(Icons.payment, color: AppColors.base),
-                    label: const Text(
-                      "Buy Now",
-                      style: TextStyle(color: AppColors.base),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.color1, // Orange
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           );

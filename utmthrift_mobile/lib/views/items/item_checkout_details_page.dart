@@ -15,7 +15,7 @@ import 'package:utmthrift_mobile/views/payment/qr_payment_page.dart';
 
 class CheckoutDetailsPage extends StatefulWidget {
   final CartItem item;
-
+  
   const CheckoutDetailsPage({super.key, required this.item});
 
   @override

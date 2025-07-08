@@ -27,8 +27,8 @@ class BottomNavBar extends StatelessWidget {
         const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         const BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
         BottomNavigationBarItem(
-          icon: Icon(userType == 'Seller' ? Icons.add : Icons.notifications),
-          label: userType == 'Seller' ? 'Upload' : 'Notifications',
+          icon: Icon(userType == 'Seller' ? Icons.add : Icons.receipt_long),
+          label: userType == 'Seller' ? 'Upload' : 'My Orders',
         ),
         BottomNavigationBarItem(
           icon: Icon(userType == 'Seller' ? Icons.list_alt : Icons.favorite),

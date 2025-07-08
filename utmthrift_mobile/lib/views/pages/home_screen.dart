@@ -21,6 +21,7 @@ import 'package:utmthrift_mobile/views/events/event_details_page.dart';
 
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 import 'package:utmthrift_mobile/views/items/item_category.dart';
+import 'package:utmthrift_mobile/views/order/order_history_page.dart';
 
 import 'package:utmthrift_mobile/views/pages/explore_page.dart';
 import 'package:utmthrift_mobile/views/pages/my_likes_page.dart';
@@ -232,7 +233,7 @@ Widget build(BuildContext context) {
       case 1:
         return const ExplorePage();
       case 2:
-        return const Center(child: Text("Notifications Page - Coming Soon"));
+        return const OrderHistoryPage();
       case 3:
         return MyLikesPage(
         userId: _userId!,

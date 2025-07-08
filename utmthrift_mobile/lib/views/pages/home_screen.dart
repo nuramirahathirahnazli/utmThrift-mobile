@@ -32,14 +32,17 @@ import 'package:utmthrift_mobile/views/shared/colors.dart';
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+  const HomeScreen({super.key, this.initialIndex = 0});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  //int _selectedIndex = 0;
+  late int _selectedIndex;
+
   final String userType = 'Buyer';
 
   final TextEditingController _searchController = TextEditingController();
@@ -96,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
  @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex;
     _initUserAndData();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {

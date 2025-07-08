@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:utmthrift_mobile/views/order/order_history_details_page.dart';
+import 'package:utmthrift_mobile/views/pages/home_screen.dart';
 import 'package:utmthrift_mobile/views/review/leave_review_page.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 import '../../models/order_model.dart';
@@ -304,7 +305,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> with RouteAware {
           style: TextStyle(
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
-            color: Colors.white
+            color: Colors.white,
           ),
         ),
         centerTitle: true,
@@ -312,7 +313,19 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> with RouteAware {
         backgroundColor: AppColors.color2,
         foregroundColor: Colors.white,
         shadowColor: Colors.black.withOpacity(0.1),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Navigate to the profile page instead of going back
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeScreen(initialIndex: 4)),
+              (route) => false,
+            );
+          },
+        ),
       ),
+
       backgroundColor: AppColors.base,
       body: FutureBuilder<List<Order>>(
         future: _ordersFuture,

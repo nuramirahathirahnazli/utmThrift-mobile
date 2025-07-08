@@ -2,17 +2,21 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:utmthrift_mobile/views/shared/colors.dart';
+
 import 'package:utmthrift_mobile/services/item_service.dart';
+import 'package:utmthrift_mobile/services/auth_service.dart';
+
+import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
+
 import 'package:utmthrift_mobile/views/buyer/seller_application_page.dart';
 import 'package:utmthrift_mobile/views/order/order_history_page.dart';
 import 'package:utmthrift_mobile/views/pages/my_likes_page.dart';
 import 'package:utmthrift_mobile/views/profile/profile_edit.dart';
 import 'package:utmthrift_mobile/views/seller/seller_sales_tracking_page.dart';
 import 'package:utmthrift_mobile/views/seller/seller_upload_qrcode_page.dart';
-import 'package:utmthrift_mobile/views/shared/colors.dart';
-import 'package:utmthrift_mobile/services/auth_service.dart';
-import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userType;

@@ -17,8 +17,13 @@ import 'package:utmthrift_mobile/viewmodels/profile_viewmodel.dart';
 class ProfilePage extends StatefulWidget {
   final String userType;
   final VoidCallback? onTap;
+  final VoidCallback? onGoToProfileTab;
 
-  const ProfilePage({super.key, required this.userType, this.onTap});
+  const ProfilePage({
+    super.key, 
+    required this.userType, 
+    this.onTap,
+    this.onGoToProfileTab});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -195,7 +200,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => SalesTrackingPage(
-                        sellerId: profileVM.user?.id ?? 0),
+                        sellerId: profileVM.user?.id ?? 0,
+                        onGoToProfile: widget.onGoToProfileTab,
+                      )
                     ),
                   );
                 }),

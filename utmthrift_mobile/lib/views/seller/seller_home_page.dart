@@ -141,7 +141,14 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
       case 3:
         return const MyItemsPage();
       case 4:
-        return ProfilePage(userType: userType,);
+        return ProfilePage(
+          userType: userType,
+          onGoToProfileTab: () {
+            setState(() {
+              _selectedIndex = 4;
+            });
+          },
+        );
       default:
         return HomeScreenContent(
           favoriteItemIds: const <int>{}, // or pass from a ViewModel if available

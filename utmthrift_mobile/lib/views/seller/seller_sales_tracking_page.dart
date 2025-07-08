@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/viewmodels/sellersale_viewmodel.dart';
-import 'package:utmthrift_mobile/views/pages/profile_page.dart';
 import 'package:utmthrift_mobile/views/seller/seller_sales_details_track_page.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 
 class SalesTrackingPage extends StatefulWidget {
   final int sellerId;
+  final VoidCallback? onGoToProfile;
 
-  const SalesTrackingPage({super.key, required this.sellerId});
+  const SalesTrackingPage({
+    super.key, 
+    required this.sellerId,
+    this.onGoToProfile,
+  });
 
   @override
   State<SalesTrackingPage> createState() => _SalesTrackingPageState();
@@ -47,12 +51,8 @@ class _SalesTrackingPageState extends State<SalesTrackingPage> {
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProfilePage(userType: userType),
-                ),
-              );
+              Navigator.pop(context); // close SalesTrackingPage
+              widget.onGoToProfile?.call(); // Navigate to ProfilePage
             },
           ),
         ],

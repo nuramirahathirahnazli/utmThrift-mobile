@@ -16,7 +16,6 @@ class SignupViewModel extends ChangeNotifier {
     required String password,
     required String contact,
     required String matric,
-    required String userType,
     required BuildContext context, // Added for navigation
   }) async {
     isLoading = true;
@@ -32,7 +31,6 @@ class SignupViewModel extends ChangeNotifier {
           'password_confirmation': password,
           'contact': contact,
           'matric': matric,
-          'user_type': userType,
         },
       );
 

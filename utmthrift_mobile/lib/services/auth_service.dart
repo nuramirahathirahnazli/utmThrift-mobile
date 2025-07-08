@@ -31,7 +31,6 @@ class AuthService {
         "password": password,
         "contact_number": contactNumber,
         "matric_number": matricNumber,
-        'user_type': userType,
       }),
     );
 

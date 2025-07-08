@@ -18,7 +18,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _contactController = TextEditingController();
   final TextEditingController _matricController = TextEditingController();
   bool _isPasswordVisible = false;
-  String _userType = "Buyer";
 
   @override
   Widget build(BuildContext context) {
@@ -178,24 +177,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               const SizedBox(height: 20.0),
 
-              // User Type Selection
-              Text("Sign up as:", 
-                   style: TextStyle(
-                     fontSize: 16,
-                     color: AppColors.color10.withOpacity(0.8),
-                   )),
+              // User Type Selection (Informative Only)
+              Text(
+                "Sign up as:",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.color10.withOpacity(0.8),
+                ),
+              ),
               const SizedBox(height: 8.0),
               DropdownButtonFormField<String>(
-                value: _userType,
-                items: ["Buyer", "Seller"].map((String type) {
-                  return DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type, style: const TextStyle(color: AppColors.color10)),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => _userType = value!);
-                },
+                value: "Buyer",
+                items: const [
+                  DropdownMenuItem(value: "Buyer", child: Text("Buyer", style: TextStyle(color: AppColors.color10))),
+                ],
+                onChanged: null, // Disables the dropdown
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.color12,
@@ -207,6 +203,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 dropdownColor: AppColors.color12,
               ),
+              const SizedBox(height: 6.0),
+              Text(
+                "Note: First-time users will be registered as Buyer. You can apply as Seller later in your profile.",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 24.0),
+
               const SizedBox(height: 24.0),
 
               // Sign-Up Button
@@ -231,7 +237,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               password: _passwordController.text,
                               contact: _contactController.text,
                               matric: _matricController.text,
-                              userType: _userType,
                               context: context,
                             );
 

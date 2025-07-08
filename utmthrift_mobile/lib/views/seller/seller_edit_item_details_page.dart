@@ -131,7 +131,7 @@ class _SellerEditItemDetailsPageState extends State<SellerEditItemDetailsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Item updated successfully!'),
-            backgroundColor: AppColors.color2,
+            backgroundColor: AppColors.color6,
           ),
         );
         Navigator.pop(context, true);

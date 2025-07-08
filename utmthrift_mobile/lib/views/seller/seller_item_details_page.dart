@@ -17,14 +17,20 @@ class ItemDetailsPage extends StatefulWidget {
 }
 
 class _ItemDetailsPageState extends State<ItemDetailsPage> {
-  late Future<Map<String, dynamic>?> _itemFuture;
+  late Future<Map<String, dynamic>?> _itemFuture = Future.value(null);
+
 
   @override
   void initState() {
     super.initState();
-    final viewModel = Provider.of<ItemViewModel>(context, listen: false);
-    _itemFuture = viewModel.fetchItemDetails(widget.itemId);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final viewModel = Provider.of<ItemViewModel>(context, listen: false);
+      setState(() {
+        _itemFuture = viewModel.fetchItemDetails(widget.itemId);
+      });
+    });
   }
+
 
   Future<void> _deleteItem() async {
     final confirm = await showDialog<bool>(

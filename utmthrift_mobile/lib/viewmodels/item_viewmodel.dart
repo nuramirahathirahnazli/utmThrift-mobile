@@ -90,6 +90,24 @@ class ItemViewModel extends ChangeNotifier {
     return itemDetails; 
   }
 
+  /// Fetch single item details using item ID (Seller Part)
+  Future<Map<String, dynamic>?> fetchItemDetailsForSeller(int id) async {
+    isLoading = true;
+    errorMessage = '';
+    notifyListeners();
+
+    try {
+      itemDetails = await _itemService.fetchItemDetailsForSeller(id);
+    } catch (e) {
+      errorMessage = e.toString();
+      itemDetails = null;
+    }
+
+    isLoading = false;
+    notifyListeners();
+    return itemDetails; 
+  }
+
   /// Fetch favorite items for the current user
   Future<void> fetchFavoriteItems() async {
     try {
@@ -191,6 +209,7 @@ class ItemViewModel extends ChangeNotifier {
     }
   }
 
+  // Update item details
   Future<bool> updateItem({
     required int itemId,
     required String name,

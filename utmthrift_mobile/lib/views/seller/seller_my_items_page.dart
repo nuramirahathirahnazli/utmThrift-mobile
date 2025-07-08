@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -78,6 +78,7 @@ class _MyItemsPageState extends State<MyItemsPage> {
                 final item = itemVM.sellerItems[index];
                 return GestureDetector(
                   onTap: () {
+                    print("Tapped item ID: ${item.id}"); // debug print
                     Navigator.push(
                       context,
                       MaterialPageRoute(

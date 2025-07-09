@@ -80,7 +80,6 @@ class Item {
     );
   }
 
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,

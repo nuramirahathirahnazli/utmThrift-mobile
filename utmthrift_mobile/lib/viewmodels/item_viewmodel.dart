@@ -90,6 +90,24 @@ class ItemViewModel extends ChangeNotifier {
     return itemDetails; 
   }
 
+  /// Fetch single item details using item ID (Seller Part)
+  Future<Map<String, dynamic>?> fetchItemDetailsForSeller(int id) async {
+    isLoading = true;
+    errorMessage = '';
+    notifyListeners();
+
+    try {
+      itemDetails = await _itemService.fetchItemDetailsForSeller(id);
+    } catch (e) {
+      errorMessage = e.toString();
+      itemDetails = null;
+    }
+
+    isLoading = false;
+    notifyListeners();
+    return itemDetails; 
+  }
+
   /// Fetch favorite items for the current user
   Future<void> fetchFavoriteItems() async {
     try {
@@ -105,7 +123,6 @@ class ItemViewModel extends ChangeNotifier {
       print("Error fetching favorites: $e");
     }
   }
-
 
   /// Toggle favorite status for an item
   Future<void> toggleFavorite(int itemId) async {
@@ -131,8 +148,6 @@ class ItemViewModel extends ChangeNotifier {
 
     notifyListeners();
   }
-
-
 
   /// Add a new item
   Future<Item?> addItem({
@@ -194,6 +209,7 @@ class ItemViewModel extends ChangeNotifier {
     }
   }
 
+  // Update item details
   Future<bool> updateItem({
     required int itemId,
     required String name,
@@ -201,7 +217,8 @@ class ItemViewModel extends ChangeNotifier {
     required double price,
     required String condition,
     required int categoryId,
-    List<XFile>? images,
+    List<XFile>? images,  // New images (picked now)
+    List<String> existingImages = const [], // Existing image URLs
   }) async {
     isLoading = true;
     notifyListeners();
@@ -215,6 +232,7 @@ class ItemViewModel extends ChangeNotifier {
         condition: condition,
         categoryId: categoryId,
         images: images,
+        existingImageUrls: existingImages,
       );
       return success;
     } catch (e) {

@@ -1,4 +1,5 @@
-// ignore_for_file: avoid_print, use_build_context_synchronously
+// Item Details at Buyer Side
+// ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:utmthrift_mobile/models/item_model.dart';
@@ -8,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:utmthrift_mobile/viewmodels/itemcart_viewmodel.dart';
 import 'package:utmthrift_mobile/views/chat/chat_screen.dart';
 import 'package:utmthrift_mobile/views/review/seller_review_profile_page.dart';
-
+import 'package:utmthrift_mobile/views/shared/colors.dart';
 
 class ItemDetailsScreen extends StatefulWidget {
   final int itemId;
@@ -44,14 +45,17 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     final viewModel = Provider.of<ItemViewModel>(context, listen: false);
     _itemFuture = viewModel.fetchItemDetails(widget.itemId);
     _cartViewModel = Provider.of<CartViewModel>(context, listen: false);
+    AuthService.getCurrentUserId().then((userId) {
+      if (userId != null) {
+        _cartViewModel.loadCartItems(userId);
+      }
+    });
   }
 
   Future<void> _loadCurrentUserId() async {
-  final id = await AuthService.getCurrentUserId();
-  setState(() {
-    currentUserId = id;
-  });
-}
+    final id = await AuthService.getCurrentUserId();
+    setState(() => currentUserId = id);
+  }
 
   Future<void> _addToCart(Map<String, dynamic> itemData) async {
     try {
@@ -73,13 +77,19 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Item added to cart.")),
+          const SnackBar(
+            content: Text("Item added to cart."),
+            backgroundColor: AppColors.color13, // Green success
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to add to cart: $e")),
+          SnackBar(
+            content: Text("Failed to add to cart: $e"),
+            backgroundColor: AppColors.color8, // Red error
+          ),
         );
       }
     }
@@ -88,21 +98,45 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Item Details")),
+      backgroundColor: AppColors.base,
+      appBar: AppBar(
+        title: const Text(
+          "Item Details",
+          style: TextStyle(
+            color: AppColors.base,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: AppColors.color2, // Maroon app bar
+        iconTheme: const IconThemeData(color: AppColors.base),
+        elevation: 0,
+      ),
       body: FutureBuilder<Map<String, dynamic>?>(
         future: _itemFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.color2),
+            );
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: const TextStyle(color: AppColors.color8), // Red error text
+              ),
+            );
           }
 
           final item = snapshot.data;
           if (item == null) {
-            return const Center(child: Text('No item details available'));
+            return const Center(
+              child: Text(
+                'No item details available',
+                style: TextStyle(color: AppColors.color10),
+              ),
+            );
           }
 
           final List<dynamic> imagesDynamic = item['images'] ?? [];
@@ -115,106 +149,192 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Item Images Carousel
+                  Container(
+                    height: 250,
+                    decoration: BoxDecoration(
+                      color: AppColors.color12, // Light yellow background
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: images.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: PageView.builder(
+                              itemCount: images.length,
+                              itemBuilder: (context, index) {
+                                final imageUrl = images[index];
+                                return Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        size: 50,
+                                        color: AppColors.color3,
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          )
+                        : const Center(
+                            child: Icon(
+                              Icons.image_not_supported,
+                              size: 50,
+                              color: AppColors.color3,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Item Name
                   Text(
                     item['name'] ?? 'Unknown Item',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.color10,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Category: ${item['category']?['name'] ?? 'Not available'}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Price: RM${num.tryParse(item['price'].toString())?.toStringAsFixed(2) ?? '0.00'}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    item['description'] ?? 'No description available',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Condition: ${item['condition'] ?? 'Unknown'}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Text(
-                        'Seller: ',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          final sellerId = item['seller']?['id'];
-                          if (sellerId != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => SellerReviewProfilePage(sellerId: sellerId),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Seller ID not available.')),
-                            );
-                          }
-                        },
-                        child: Text(
-                          item['seller']?['name'] ?? 'Unknown',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Images:',
-                    style: TextStyle(
-                      fontSize: 16,
+                  // Price
+                  Text(
+                    'RM${num.tryParse(item['price'].toString())?.toStringAsFixed(2) ?? '0.00'}',
+                    style: const TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.color1, // Orange price
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 150,
-                    child: images.isNotEmpty
-                        ? ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: images.length,
-                            itemBuilder: (context, index) {
-                              final imageUrl = images[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: Image.network(
-                                  imageUrl,
-                                  width: 150,
-                                  height: 150,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    print('Error loading image $imageUrl: $error');
-                                    return const Icon(Icons.broken_image, size: 50);
-                                  },
-                                ),
-                              );
-                            },
-                          )
-                        : const Center(child: Text("No images available")),
+                  const SizedBox(height: 16),
+
+                  // Details Card
+                  Card(
+                    color: AppColors.color12,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Condition
+                          _buildDetailRow(
+                            icon: Icons.assignment_outlined,
+                            label: 'Condition',
+                            value: item['condition'] ?? 'Unknown',
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Category
+                          _buildDetailRow(
+                            icon: Icons.category_outlined,
+                            label: 'Category',
+                            value: item['category']?['name'] ?? 'Not available',
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Seller
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.person_outline,
+                                size: 20,
+                                color: AppColors.color2,
+                              ),
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Seller',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  TextButton(
+                                    onPressed: () {
+                                      final sellerId = item['seller']?['id'];
+                                      if (sellerId != null) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => SellerReviewProfilePage(sellerId: sellerId),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Seller ID not available.'),
+                                            backgroundColor: AppColors.color8,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(50, 30),
+                                    ),
+                                    child: Text(
+                                      item['seller']?['name'] ?? 'Unknown',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: AppColors.color2,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 16),
+
+                  // Description Card
+                  Card(
+                    color: AppColors.color12,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Description',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.color10,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            item['description'] ?? 'No description available',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.color10.withOpacity(0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
@@ -226,18 +346,30 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         builder: (context, snapshot) {
           final isDataAvailable = snapshot.hasData && snapshot.data != null;
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.base,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Chat Button
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       if (snapshot.data?['seller'] == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text("Seller information not available.")),
+                            content: Text("Seller information not available."),
+                            backgroundColor: AppColors.color8,
+                          ),
                         );
                         return;
                       }
@@ -248,7 +380,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
                       if (currentUserId == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("User not logged in.")),
+                          const SnackBar(
+                            content: Text("User not logged in."),
+                            backgroundColor: AppColors.color8,
+                          ),
                         );
                         return;
                       }
@@ -267,28 +402,40 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.chat),
-                    label: const Text("Chat"),
+                    icon: const Icon(Icons.chat, color: AppColors.base),
+                    label: const Text(
+                      "Chat",
+                      style: TextStyle(color: AppColors.base),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: AppColors.color7, // Blue
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      textStyle: const TextStyle(fontSize: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
+
+                // Cart Button
                 Consumer<CartViewModel>(
                   builder: (context, cartViewModel, child) {
                     if (!isDataAvailable) {
                       return Expanded(
                         child: ElevatedButton.icon(
                           onPressed: null,
-                          icon: const Icon(Icons.shopping_cart),
-                          label: const Text("Cart"),
+                          icon: const Icon(Icons.shopping_cart, color: AppColors.base),
+                          label: const Text(
+                            "Cart",
+                            style: TextStyle(color: AppColors.base),
+                          ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
+                            backgroundColor: AppColors.color9, // Grey
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            textStyle: const TextStyle(fontSize: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       );
@@ -312,46 +459,70 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
                     return Expanded(
                       child: ElevatedButton.icon(
-                        onPressed:
-                            isInCart ? null : () => _addToCart(snapshot.data!),
+                        onPressed: isInCart ? null : () => _addToCart(snapshot.data!),
                         icon: Icon(
-                          isInCart
-                              ? Icons.check_circle
-                              : Icons.shopping_cart,
+                          isInCart ? Icons.check_circle : Icons.shopping_cart,
+                          color: AppColors.base,
                         ),
                         label: Text(
-                          isInCart ? "Already in Cart" : "Add to Cart",
+                          isInCart ? "In Cart" : "Add to Cart",
+                          style: const TextStyle(color: AppColors.base),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isInCart ? Colors.grey : Colors.green,
+                          backgroundColor: isInCart ? AppColors.color9 : AppColors.color2, // Grey or Maroon
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          textStyle: const TextStyle(fontSize: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     );
                   },
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/payment');
-                    },
-                    icon: const Icon(Icons.payment),
-                    label: const Text("Buy"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      textStyle: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ),
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: AppColors.color2,
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppColors.color10,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

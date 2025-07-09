@@ -1,22 +1,23 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:utmthrift_mobile/views/order/order_history_details_page.dart';
+import 'package:utmthrift_mobile/views/pages/home_screen.dart';
 import 'package:utmthrift_mobile/views/review/leave_review_page.dart';
+import 'package:utmthrift_mobile/views/shared/colors.dart';
 import '../../models/order_model.dart';
 import '../../services/order_service.dart';
-import 'package:utmthrift_mobile/main.dart'; 
+import 'package:utmthrift_mobile/main.dart';
 
 class OrderHistoryPage extends StatefulWidget {
-
   final bool refresh;
   final Map<String, dynamic>? paymentResult;
 
   const OrderHistoryPage({
     super.key,
     this.refresh = false,
-    this.paymentResult
+    this.paymentResult,
   });
 
   @override
@@ -30,9 +31,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> with RouteAware {
   @override
   void initState() {
     super.initState();
-    _ordersFuture = OrderService.getBuyerOrders();
     _initializeOrders();
-    _prepareAsyncData(); 
+    _prepareAsyncData();
   }
 
   @override
@@ -42,22 +42,20 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> with RouteAware {
   }
 
   void _prepareAsyncData() {
-    _handleWebAuthToken(); 
-    _loadBuyerId();        
+    _handleWebAuthToken();
+    _loadBuyerId();
   }
 
   @override
   void didPopNext() {
-    // Called when coming back to this page
-    print('>> Returned to OrderHistoryPage, refreshing...');
     setState(() {
-      _ordersFuture = OrderService.getBuyerOrders(); // re-fetch updated orders
+      _ordersFuture = OrderService.getBuyerOrders();
     });
   }
 
   @override
   void dispose() {
-    routeObserver.unsubscribe(this); // Don't forget this!
+    routeObserver.unsubscribe(this);
     super.dispose();
   }
 
@@ -67,7 +65,6 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> with RouteAware {
     if (token != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
-      print("Token saved to prefs: $token");
     }
   }
 
@@ -75,30 +72,42 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> with RouteAware {
     final success = await OrderService.confirmOrder(orderId);
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Meet Up confirmed!')),
+        SnackBar(
+          content: const Text('Meet Up confirmed!'),
+          backgroundColor: Colors.green[800],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       );
       setState(() {
         _ordersFuture = OrderService.getBuyerOrders();
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to confirm order.')),
+        SnackBar(
+          content: const Text('Failed to confirm order.'),
+          backgroundColor: Colors.red[800],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       );
     }
   }
 
   void _initializeOrders() {
-    // If this page was navigated to with a request to refresh
     if (widget.refresh || widget.paymentResult != null) {
-      print('Refreshing order list due to payment result');
       setState(() {
-        _ordersFuture = OrderService.getBuyerOrders(); // fetch latest orders
+        _ordersFuture = OrderService.getBuyerOrders();
       });
     } else {
-      _ordersFuture = OrderService.getBuyerOrders(); // initial load
+      _ordersFuture = OrderService.getBuyerOrders();
     }
   }
-  
+
   Future<void> _loadBuyerId() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -107,91 +116,349 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> with RouteAware {
   }
 
   Widget _buildOrderCard(Order order) {
-  print('>> OrderHistoryPage: refresh=${widget.refresh}, paymentResult=${widget.paymentResult}');
-  print('DEBUG >> Order item name: ${order.item?.name}');
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OrderHistoryDetailsPage(order: order),
-        ),
-      );
-    },
-    child: Card(
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-      child: ListTile(
-        title: Text(order.item?.name ?? 'Unnamed Item'),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Status: ${order.status}'),
-            Text('Payment: ${order.paymentMethod}'),
-            if (order.paymentMethod == 'Meet Up' && order.status.toLowerCase() == 'pending')
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: ElevatedButton(
-                  onPressed: () => _confirmOrder(order.id),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  child: const Text('Confirm Meet Up'),
-                ),
+    final statusColor = _getStatusColor(order.status);
+    final isPendingMeetUp = order.paymentMethod == 'Meet Up' && 
+                          order.status.toLowerCase() == 'pending';
+    final isCompleted = order.status.toLowerCase() == 'completed';
+    
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      elevation: 4,
+      color: AppColors.color11,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      shadowColor: Colors.black.withOpacity(0.1),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OrderHistoryDetailsPage(order: order),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      order.item?.name ?? 'Unnamed Item',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: statusColor.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      order.status.toUpperCase(),
+                      style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-          // Leave Review Button for Completed Orders
-            if (order.status.toLowerCase() == 'completed')
-              ElevatedButton(
-                onPressed: order.alreadyReviewed
-                    ? null // disables the button
-                    : () {
-                        final item = order.item!;
-                        final int sellerId = item.sellerId;
-                        final int buyerId = _buyerId;
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getPaymentIcon(order.paymentMethod),
+                      size: 16,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    order.paymentMethod,
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (isPendingMeetUp || isCompleted)
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: isPendingMeetUp
+                        ? LinearGradient(colors: [Colors.green[600]!, Colors.green[800]!])
+                        : (order.alreadyReviewed
+                            ? LinearGradient(colors: [Colors.grey[600]!, Colors.grey[800]!])
+                            : LinearGradient(colors: [
+                                Theme.of(context).primaryColor,
+                                Theme.of(context).primaryColorDark,
+                              ])),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: isPendingMeetUp
+                        ? () => _confirmOrder(order.id)
+                        : order.alreadyReviewed
+                            ? null
+                            : () {
+                                final item = order.item!;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => LeaveReviewPage(
+                                      orderId: order.id,
+                                      itemId: item.id,
+                                      buyerId: _buyerId,
+                                      sellerId: item.sellerId,
+                                    ),
+                                  ),
+                                );
+                              },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(
+                      isPendingMeetUp
+                          ? 'CONFIRM MEET UP'
+                          : order.alreadyReviewed
+                              ? 'REVIEW SUBMITTED'
+                              : 'LEAVE REVIEW',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => LeaveReviewPage(
-                              orderId: order.id,
-                              itemId: item.id,
-                              buyerId: buyerId,
-                              sellerId: sellerId,
-                            ),
-                          ),
-                        );
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      order.alreadyReviewed ? Colors.grey : Colors.orange,
-                ),
-                child: Text(
-                  order.alreadyReviewed ? 'Review Submitted' : 'Leave a Review',
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return Colors.green[800]!;
+      case 'pending':
+        return Colors.orange[800]!;
+      case 'cancelled':
+        return Colors.red[800]!;
+      default:
+        return Colors.grey[800]!;
+    }
+  }
+
+  IconData _getPaymentIcon(String paymentMethod) {
+    switch (paymentMethod.toLowerCase()) {
+      case 'credit card':
+        return Icons.credit_card;
+      case 'online banking':
+        return Icons.account_balance;
+      case 'meet up':
+        return Icons.handshake;
+      default:
+        return Icons.payment;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Order History')),
+      appBar: AppBar(
+        title: const Text(
+          'Order History',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: AppColors.color2,
+        foregroundColor: Colors.white,
+        shadowColor: Colors.black.withOpacity(0.1),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Navigate to the profile page instead of going back
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeScreen(initialIndex: 4)),
+              (route) => false,
+            );
+          },
+        ),
+      ),
+
+      backgroundColor: AppColors.base,
       body: FutureBuilder<List<Order>>(
         future: _ordersFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.black54),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Loading your orders...',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            );
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Colors.red[800],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Error loading orders',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      '${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _ordersFuture = OrderService.getBuyerOrders();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black87,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                    ),
+                    child: const Text(
+                      'Try Again',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
           } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-            return const Center(child: Text('No orders found.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 72,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'No orders yet',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 48),
+                    child: Text(
+                      'Your completed orders will appear here',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
           } else {
             final orders = snapshot.data!;
-            return ListView.builder(
-              itemCount: orders.length,
-              itemBuilder: (context, index) =>
-                  _buildOrderCard(orders[index]),
+            return RefreshIndicator(
+              color: Colors.black87,
+              backgroundColor: Colors.white,
+              onRefresh: () async {
+                setState(() {
+                  _ordersFuture = OrderService.getBuyerOrders();
+                });
+              },
+              child: ListView.separated(
+                padding: const EdgeInsets.only(top: 16, bottom: 24),
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: orders.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) => _buildOrderCard(orders[index]),
+              ),
             );
           }
         },

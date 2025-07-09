@@ -4,9 +4,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart'; // for kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:utmthrift_mobile/viewmodels/item_viewmodel.dart';
 import 'package:utmthrift_mobile/services/item_service.dart';
+import 'package:utmthrift_mobile/views/shared/colors.dart';
 
 class SellerEditItemDetailsPage extends StatefulWidget {
   final Map<String, dynamic> item;
@@ -40,24 +41,27 @@ class _SellerEditItemDetailsPageState extends State<SellerEditItemDetailsPage> {
   @override
   void initState() {
     super.initState();
+    _initializeControllers();
+    _loadInitialData();
+  }
 
+  void _initializeControllers() {
     _nameController = TextEditingController(text: widget.item['name'] ?? '');
     _priceController = TextEditingController(
         text: widget.item['price']?.toString() ?? '');
     _descriptionController =
         TextEditingController(text: widget.item['description'] ?? '');
     _condition = widget.item['condition'] ?? 'Used';
-    _selectedCategoryId = widget.item['category_id'];
+    _selectedCategoryId = widget.item['category']?['id'];
     _existingImageUrls = List<String>.from(widget.item['images'] ?? []);
+  }
 
+  void _loadInitialData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = Provider.of<ItemViewModel>(context, listen: false);
-      viewModel.fetchCategories().then((_) {
-        print('DEBUG: Categories fetched: ${viewModel.categories}');
-      }).catchError((e) {
-        print('ERROR: Failed to fetch categories - $e');
+      viewModel.fetchCategories().catchError((e) {
+        _showErrorSnackbar('Failed to fetch categories: $e');
       });
-
       _loadItemDetails();
     });
   }
@@ -66,12 +70,23 @@ class _SellerEditItemDetailsPageState extends State<SellerEditItemDetailsPage> {
     try {
       final itemId = widget.item['id'];
       final item = await ItemService().fetchItemDetails(itemId);
-      setState(() {
-        _existingImageUrls = List<String>.from(item['images'] ?? []);
-      });
+      if (mounted) {
+        setState(() {
+          _existingImageUrls = List<String>.from(item['images'] ?? []);
+        });
+      }
     } catch (e) {
-      print('ERROR: Failed to load item details - $e');
+      if (mounted) _showErrorSnackbar('Failed to load item details: $e');
     }
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.color8,
+      ),
+    );
   }
 
   @override
@@ -83,20 +98,15 @@ class _SellerEditItemDetailsPageState extends State<SellerEditItemDetailsPage> {
   }
 
   Future<void> _pickImages() async {
-    final ImagePicker picker = ImagePicker();
-    final List<XFile>? images = await picker.pickMultiImage();
+    final List<XFile>? images = await ImagePicker().pickMultiImage();
     if (images != null && images.isNotEmpty) {
-      setState(() {
-        _pickedImages = images;
-      });
+      setState(() => _pickedImages = images);
     }
   }
 
   Future<void> _updateItem() async {
     if (_selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category.')),
-      );
+      _showErrorSnackbar('Please select a category');
       return;
     }
 
@@ -112,128 +122,190 @@ class _SellerEditItemDetailsPageState extends State<SellerEditItemDetailsPage> {
         condition: _condition,
         categoryId: _selectedCategoryId!,
         images: _pickedImages,
+        existingImages: _existingImageUrls,
       );
 
       if (!mounted) return;
 
       if (viewModel.errorMessage.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Item updated successfully!')),
+          const SnackBar(
+            content: Text('Item updated successfully!'),
+            backgroundColor: AppColors.color6,
+          ),
         );
         Navigator.pop(context, true);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Update failed: ${viewModel.errorMessage}')),
-        );
+        _showErrorSnackbar('Update failed: ${viewModel.errorMessage}');
       }
     } catch (e) {
-      print('ERROR during update: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
+      _showErrorSnackbar('Error: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Widget _buildConditionDropdown() {
     return DropdownButtonFormField<String>(
       value: _condition,
-      decoration: const InputDecoration(labelText: 'Condition'),
+      decoration: appInputDecoration(
+        labelText: 'Condition',
+        prefixIcon: Icons.construction,
+      ),
+      dropdownColor: AppColors.base,
+      style: const TextStyle(color: AppColors.color10),
       items: _conditionOptions
-          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+          .map((c) => DropdownMenuItem(
+                value: c,
+                child: Text(c, style: const TextStyle(color: AppColors.color10)),
+              ))
           .toList(),
       onChanged: (value) {
-        if (value != null) {
-          setState(() => _condition = value);
-        }
+        if (value != null) setState(() => _condition = value);
       },
     );
   }
 
   Widget _buildCategoryDropdown(List<dynamic> categories) {
     if (categories.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.color2),
+      );
     }
     return DropdownButtonFormField<int>(
       value: _selectedCategoryId,
-      decoration: const InputDecoration(labelText: 'Category'),
+      decoration: appInputDecoration(
+        labelText: 'Category',
+        prefixIcon: Icons.category,
+      ),
+      dropdownColor: AppColors.base,
+      style: const TextStyle(color: AppColors.color10),
       items: categories
           .map((cat) => DropdownMenuItem<int>(
                 value: cat['id'],
-                child: Text(cat['name']),
+                child: Text(
+                  cat['name'],
+                  style: const TextStyle(color: AppColors.color10),
+                ),
               ))
           .toList(),
       onChanged: (value) {
-        if (value != null) {
-          setState(() => _selectedCategoryId = value);
-        }
+        if (value != null) setState(() => _selectedCategoryId = value);
       },
+      hint: Text(
+        'Select a category',
+        style: TextStyle(color: AppColors.color10.withOpacity(0.5)),
+      ),
     );
   }
 
   Widget _buildImagePreview() {
     final images = _pickedImages ?? [];
+    final allImages = [..._existingImageUrls, ...images.map((e) => e.path)];
 
-    if (images.isNotEmpty) {
-      return SizedBox(
-        height: 100,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: images.length,
-          itemBuilder: (_, i) {
-            if (kIsWeb) {
-              return Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Image.network(
-                  images[i].path,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.broken_image),
-                ),
-              );
-            } else {
-              return Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Image.file(
-                  File(images[i].path),
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                ),
-              );
-            }
-          },
-        ),
-      );
-    } else if (_existingImageUrls.isNotEmpty) {
-      return SizedBox(
-        height: 100,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: _existingImageUrls.length,
-          itemBuilder: (_, i) => Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: Image.network(
-              _existingImageUrls[i],
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.broken_image),
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
+    if (allImages.isEmpty) {
+      return Column(
+        children: [
+          sectionHeader('Images'),
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: AppColors.color12.withOpacity(0.3),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.image, size: 40, color: AppColors.color2),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No images selected',
+                    style: TextStyle(color: AppColors.color10.withOpacity(0.6)),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       );
     }
 
-    return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        sectionHeader('Images'),
+        SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: allImages.length,
+            itemBuilder: (_, index) {
+              final isNewImage = index >= _existingImageUrls.length;
+              final image = allImages[index];
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.color12,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: isNewImage
+                            ? kIsWeb
+                                ? Image.network(
+                                    image,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        const Icon(Icons.broken_image),
+                                  )
+                                : Image.file(
+                                    File(image),
+                                    fit: BoxFit.cover,
+                                  )
+                            : Image.network(
+                                image,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    const Icon(Icons.broken_image),
+                              ),
+                      ),
+                    ),
+                    if (isNewImage)
+                      Positioned(
+                        top: 5,
+                        right: 5,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _pickedImages!.removeAt(
+                              index - _existingImageUrls.length)),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.color8,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -241,57 +313,175 @@ class _SellerEditItemDetailsPageState extends State<SellerEditItemDetailsPage> {
     final viewModel = Provider.of<ItemViewModel>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Item')),
+      backgroundColor: AppColors.base,
+      appBar: AppBar(
+        title: const Text(
+          'Edit Item',
+          style: TextStyle(
+            color: AppColors.base,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: AppColors.color2,
+        iconTheme: const IconThemeData(color: AppColors.base),
+        elevation: 0,
+      ),
       body: viewModel.isLoading || _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppColors.color2))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Item Name'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _priceController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Price'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _descriptionController,
-                    maxLines: 4,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildConditionDropdown(),
-                  const SizedBox(height: 12),
-                  _buildCategoryDropdown(viewModel.categories),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _pickImages,
-                    child: const Text('Pick Images'),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildImagePreview(),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _updateItem,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      backgroundColor: Colors.orange,
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildTextFormField(
+                      controller: _nameController,
+                      label: 'Item Name',
+                      icon: Icons.shopping_bag,
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? 'Required field' : null,
                     ),
-                    child: const Text(
-                      'Update Item',
-                      style: TextStyle(fontSize: 18),
+                    const SizedBox(height: 16),
+                    _buildTextFormField(
+                      controller: _priceController,
+                      label: 'Price',
+                      icon: Icons.attach_money,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) return 'Required field';
+                        if (double.tryParse(value!) == null) {
+                          return 'Enter valid price';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    _buildTextFormField(
+                      controller: _descriptionController,
+                      label: 'Description',
+                      icon: Icons.description,
+                      maxLines: 4,
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? 'Required field' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildConditionDropdown(),
+                    const SizedBox(height: 16),
+                    _buildCategoryDropdown(viewModel.categories),
+                    const SizedBox(height: 24),
+                    _buildImagePreview(),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _pickImages,
+                      icon: const Icon(Icons.add_a_photo, color: AppColors.base),
+                      label: const Text(
+                        "Add More Images",
+                        style: TextStyle(color: AppColors.base),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.color2,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _updateItem,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.color2,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Update Item',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.base,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ),
     );
   }
+
+  Widget _buildTextFormField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    int? maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: appInputDecoration(
+        labelText: label,
+        prefixIcon: icon,
+      ),
+      style: const TextStyle(color: AppColors.color10),
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      validator: validator,
+    );
+  }
+}
+
+// Reusable components from previous beautification
+InputDecoration appInputDecoration({
+  required String labelText,
+  required IconData prefixIcon,
+}) {
+  return InputDecoration(
+    labelText: labelText,
+    labelStyle: TextStyle(color: AppColors.color10.withOpacity(0.8)),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: const BorderSide(color: AppColors.color2),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: AppColors.color2.withOpacity(0.5)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: const BorderSide(color: AppColors.color2, width: 2),
+    ),
+    filled: true,
+    fillColor: AppColors.base.withOpacity(0.05),
+    prefixIcon: Icon(prefixIcon, color: AppColors.color2),
+    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+  );
+}
+
+Widget sectionHeader(String title) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: AppColors.color2,
+      ),
+    ),
+  );
 }

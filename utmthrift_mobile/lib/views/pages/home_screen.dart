@@ -21,6 +21,7 @@ import 'package:utmthrift_mobile/views/events/event_details_page.dart';
 
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 import 'package:utmthrift_mobile/views/items/item_category.dart';
+import 'package:utmthrift_mobile/views/order/order_history_page.dart';
 
 import 'package:utmthrift_mobile/views/pages/explore_page.dart';
 import 'package:utmthrift_mobile/views/pages/my_likes_page.dart';
@@ -28,18 +29,20 @@ import 'package:utmthrift_mobile/views/pages/profile_page.dart';
 
 import 'package:utmthrift_mobile/views/shared/bottom_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
-import 'package:utmthrift_mobile/views/shared/hamburger_menu.dart';
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+  const HomeScreen({super.key, this.initialIndex = 0});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  //int _selectedIndex = 0;
+  late int _selectedIndex;
+
   final String userType = 'Buyer';
 
   final TextEditingController _searchController = TextEditingController();
@@ -96,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
  @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex;
     _initUserAndData();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -180,12 +184,7 @@ Widget build(BuildContext context) {
     builder: (context, chatVM, child) {
       return Scaffold(
         resizeToAvoidBottomInset: false,
-        drawer: HamburgerMenu(
-          userType: userType,
-          onLogout: () {
-            Navigator.pushReplacementNamed(context, '/login');
-          },
-        ),
+        
         backgroundColor: AppColors.base,
         appBar: _selectedIndex == 0
             ? PreferredSize(
@@ -197,9 +196,15 @@ Widget build(BuildContext context) {
                       onSearchSubmitted: _onSearchSubmitted,
                       cartCount: cartViewModel.itemCount,
                       chatCount: chatVM.unreadCount, 
-                      onCartPressed: () {
-                        Navigator.pushNamed(context, '/cartPage');
+                      onCartPressed: () async {
+                        await Navigator.pushNamed(context, '/cartPage');
+
+                        final userId = await AuthService.getCurrentUserId();
+                        if (userId != null) {
+                          Provider.of<CartViewModel>(context, listen: false).loadCartItems(userId);
+                        }
                       },
+
                     );
                   },
                 ),
@@ -232,7 +237,7 @@ Widget build(BuildContext context) {
       case 1:
         return const ExplorePage();
       case 2:
-        return const Center(child: Text("Notifications Page - Coming Soon"));
+        return const OrderHistoryPage();
       case 3:
         return MyLikesPage(
         userId: _userId!,

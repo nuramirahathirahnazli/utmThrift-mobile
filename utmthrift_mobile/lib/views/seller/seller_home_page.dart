@@ -21,6 +21,7 @@ import 'package:utmthrift_mobile/views/events/all_events_page.dart';
 import 'package:utmthrift_mobile/views/events/event_details_page.dart';
 import 'package:utmthrift_mobile/views/items/item_card_explore.dart';
 import 'package:utmthrift_mobile/views/items/item_category.dart';
+import 'package:utmthrift_mobile/views/pages/explore_page.dart';
 
 //Page based on bottom menu navigation
 import 'package:utmthrift_mobile/views/pages/profile_page.dart';
@@ -30,7 +31,6 @@ import 'package:utmthrift_mobile/views/seller/seller_my_items_page.dart';
 //shared folder
 import 'package:utmthrift_mobile/views/shared/bottom_nav.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
-import 'package:utmthrift_mobile/views/shared/hamburger_menu.dart';
 import 'package:utmthrift_mobile/views/shared/top_nav.dart';
 
 class SellerHomeScreen extends StatefulWidget {
@@ -96,12 +96,6 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      drawer: HamburgerMenu(
-        userType: 'Seller', // or pass dynamically
-        onLogout: () {
-          Navigator.pushReplacementNamed(context, '/login');
-        },
-      ),
       backgroundColor: AppColors.base,
       appBar: _selectedIndex == 0 
       ? TopNavBar(
@@ -141,13 +135,20 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
         );
 
       case 1:
-        return const Center(child: Text("Explore Page - Coming Soon"));
+        return const ExplorePage();
       case 2:
         return const AddItemScreen(); 
       case 3:
         return const MyItemsPage();
       case 4:
-        return ProfilePage(userType: userType,);
+        return ProfilePage(
+          userType: userType,
+          onGoToProfileTab: () {
+            setState(() {
+              _selectedIndex = 4;
+            });
+          },
+        );
       default:
         return HomeScreenContent(
           favoriteItemIds: const <int>{}, // or pass from a ViewModel if available
@@ -345,12 +346,20 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   }
 
   Widget _buildProductGrid() {
+    final currentUserId = context.read<UserViewModel>().userId;
+
     return Consumer<ItemViewModel>(
       builder: (context, vm, _) {
         if (vm.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (vm.latestItems.isEmpty) {
+
+        // Filter out items where the item's sellerId matches the current logged-in seller
+        final filteredItems = vm.latestItems
+            .where((item) => item.sellerId != currentUserId)
+            .toList();
+
+        if (filteredItems.isEmpty) {
           return const Center(child: Text("No items available"));
         }
 
@@ -363,19 +372,18 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             mainAxisSpacing: 10,
             childAspectRatio: 0.75,
           ),
-          itemCount: vm.latestItems.length,
+          itemCount: filteredItems.length,
           itemBuilder: (context, index) {
-            final item = vm.latestItems[index];
+            final item = filteredItems[index];
             return ItemCardExplore(
               imageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
               name: item.name,
               price: item.price,
-              condition: item.condition, 
+              condition: item.condition,
               seller: '', 
               itemId: item.id,
-              isFavorite: false, // placeholder, update with actual logic if needed
+              isFavorite: false,
               onFavoriteToggle: () {
-                // placeholder function, update with favorite toggle logic
                 print("Toggled favorite for item ${item.id}");
               },
             );
@@ -384,5 +392,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
       },
     );
   }
+
 }
 

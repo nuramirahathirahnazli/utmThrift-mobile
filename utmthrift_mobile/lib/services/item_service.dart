@@ -173,6 +173,41 @@ class ItemService {
     }
   }
 
+  //Seller part : fetch item details by item ID
+  Future<Map<String, dynamic>> fetchItemDetailsForSeller(int id) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print("Token: $token");
+
+    if (token == null) throw Exception("User is not authenticated");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/items/$id'), 
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final item = data['item'];
+
+        //Handle images
+        final List<dynamic> imagesDynamic = item['images'] ?? [];
+        final List<String> images = imagesDynamic.map((e) => e.toString()).toList();
+        item['images'] = images;
+        
+        return item;
+      } else {
+        throw Exception('Failed to fetch item: ${data['message']}');
+      }
+    } else {
+      throw Exception('Failed to load item');
+    }
+  }
+
   // Fetch favorite items for a user. 
   // But this only fetch ids, not all the data of that item
   Future<Set<int>> fetchFavoriteItemIds(int userId) async {
@@ -364,6 +399,7 @@ class ItemService {
     required String condition,
     required int categoryId,
     List<XFile>? images,
+    List<String>? existingImageUrls, 
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -378,6 +414,13 @@ class ItemService {
       ..fields['price'] = price.toString()
       ..fields['condition'] = condition
       ..fields['category_id'] = categoryId.toString();
+
+    if (existingImageUrls != null) {
+      for (var url in existingImageUrls) {
+        request.fields['existing_images[]'] = url; // ✅ Laravel expects array format
+      }
+    }
+
 
     if (images != null) {
       if (kIsWeb) {

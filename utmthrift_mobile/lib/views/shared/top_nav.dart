@@ -68,14 +68,9 @@ class _TopNavBarState extends State<TopNavBar> {
     final currentUserId = userVM.userId;
 
     return AppBar(
+      automaticallyImplyLeading: false,
       backgroundColor: AppColors.base.withOpacity(0.9),
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.menu),
-        onPressed: () {
-          Scaffold.of(context).openDrawer();
-        },
-      ),
       title: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(

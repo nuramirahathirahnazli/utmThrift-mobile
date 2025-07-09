@@ -165,7 +165,10 @@ class _ExplorePageState extends State<ExplorePage> {
             _selectedCondition == null || item.condition == _selectedCondition;
         final matchesPrice = _selectedPriceRange == null || _matchPriceRange(item.price, _selectedPriceRange!);
 
-        return matchesSearch && matchesCategory && matchesCondition && matchesPrice;
+        // To exclude seller's own items
+        final isNotOwnItem = _userId == null || item.sellerId != _userId;
+
+        return matchesSearch && matchesCategory && matchesCondition && matchesPrice && isNotOwnItem;
       }).toList();
 
       if (mounted) {

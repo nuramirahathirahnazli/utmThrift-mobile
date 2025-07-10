@@ -132,7 +132,7 @@ class OrderService {
     final token = await _getToken();
     if (token == null) return false;
 
-    final url = Uri.parse('$baseUrl/seller/upload-qr-code'); // Your Laravel API
+    final url = Uri.parse('$baseUrl/seller/upload-qr-code');
 
     final request = http.MultipartRequest('POST', url);
     request.headers.addAll({

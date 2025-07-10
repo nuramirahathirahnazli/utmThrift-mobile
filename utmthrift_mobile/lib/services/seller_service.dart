@@ -46,7 +46,7 @@ class SellerService {
   static Future<String?> getSellerQrCode() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    final userId = prefs.getInt('user_id'); // Or however you store it
+    final userId = prefs.getInt('user_id'); 
 
     final response = await http.get(
       Uri.parse('$baseUrl/seller/$userId/qr-code'),

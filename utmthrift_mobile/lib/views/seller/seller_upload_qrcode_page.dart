@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:utmthrift_mobile/services/order_service.dart';
+import 'package:utmthrift_mobile/services/seller_service.dart';
 import 'package:utmthrift_mobile/views/shared/colors.dart';
 
 class UploadQrCodePage extends StatefulWidget {
@@ -18,6 +19,14 @@ class _UploadQrCodePageState extends State<UploadQrCodePage> {
   File? _selectedImage;
   bool _isUploading = false;
 
+  String? _qrCodeUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchExistingQrCode();
+  }
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
@@ -25,6 +34,13 @@ class _UploadQrCodePageState extends State<UploadQrCodePage> {
     if (picked != null) {
       setState(() => _selectedImage = File(picked.path));
     }
+  }
+
+  Future<void> _fetchExistingQrCode() async {
+    final url = await SellerService.getSellerQrCode();
+    setState(() {
+      _qrCodeUrl = url;
+    });
   }
 
   Future<void> _uploadQrCode() async {
@@ -37,10 +53,11 @@ class _UploadQrCodePageState extends State<UploadQrCodePage> {
     setState(() => _isUploading = false);
 
     if (success) {
+      await _fetchExistingQrCode();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("QR Code uploaded successfully"),
-          backgroundColor: AppColors.color2,
+          backgroundColor: AppColors.color6,
         ),
       );
       Navigator.pop(context);
@@ -80,6 +97,7 @@ class _UploadQrCodePageState extends State<UploadQrCodePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Show selected image
                   if (_selectedImage != null)
                     Container(
                       height: 250,
@@ -98,6 +116,25 @@ class _UploadQrCodePageState extends State<UploadQrCodePage> {
                         ),
                       ),
                     )
+                    else if (_qrCodeUrl != null)
+                      // Show current uploaded QR code image
+                      Container(
+                        height: 250,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.color12.withOpacity(0.1),
+                          border: Border.all(
+                            color: AppColors.color2.withOpacity(0.3),
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            _qrCodeUrl!,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      )
                   else
                     Column(
                       children: [

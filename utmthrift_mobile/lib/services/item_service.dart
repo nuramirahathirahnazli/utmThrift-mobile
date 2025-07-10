@@ -416,11 +416,10 @@ class ItemService {
       ..fields['category_id'] = categoryId.toString();
 
     if (existingImageUrls != null) {
-      for (var url in existingImageUrls) {
-        request.fields['existing_images[]'] = url; // ✅ Laravel expects array format
+      for (int i = 0; i < existingImageUrls.length; i++) {
+        request.fields['existing_images[$i]'] = existingImageUrls[i];
       }
     }
-
 
     if (images != null) {
       if (kIsWeb) {
